@@ -9,14 +9,15 @@ import qualified Data.Text.Lazy as T
 import qualified Data.ByteString.Char8 as BS
 
 
+tobs = BS.pack
 
-
-
+space = tobs " "
 
 main = scotty 3000 $ do
     concatenateRoute
     needleRoute
 
+(@!) = BS.index
 
 
 concatenateRoute :: ScottyM ()
@@ -32,18 +33,18 @@ concatAction = do
 
 needleAction :: ActionM ()
 needleAction = do
-    string1 <- liftM BS.unpack $ param "string1"
-    string2 <- liftM BS.unpack $ param "string2"
+    string1 <- param "string1"
+    string2 <- param "string2"
     text $ T.pack $ show $ align  string1  string2
 
 
-align :: String -> String -> [String]
-align da db = format $ reverse $ traceback lena lenb
+align :: BS.ByteString -> BS.ByteString -> [BS.ByteString]
+align da db = map BS.pack $ format $ reverse $ traceback lena lenb
     where
-        lena = length da
-        lenb = length db
-        a = ' ' : da
-        b = ' ' : db
+        lena = BS.length da
+        lenb = BS.length db
+        a = BS.append space da
+        b = BS.append space db
         memscore = listArray ((0,0), (lena, lenb))
                 [score x y | x <- [0..lena], y <- [0..lenb]]
         infix 5 @@
@@ -53,13 +54,13 @@ align da db = format $ reverse $ traceback lena lenb
         score x y = maximum [(x-1 @@ y - 1)  + difference x y,
                       x-1  @@ y,
                       x    @@ y-1]
-                        where difference x y | a !! x == b !! y = 1 --matches
-                                                    | otherwise        = 0 --doesn't match
+                        where difference x y | BS.index a x == BS.index b y = 1 --matches
+                                             | otherwise                    = 0 --doesn't match
         traceback :: Int -> Int -> [(Char, Char)]
         traceback 0 0 = []
-        traceback x y | x == 0               = (' '    , b !! y):traceback 0     (y-1)
-                          | y == 0               = (a !! x ,  ' '  ):traceback (x-1) 0
-                          | x @@ y == x @@ y-1   = (' ', b !! y)    :traceback x     (y-1)
-                          | x @@ y == x-1 @@ y   = (a !! x, ' ')    :traceback (x-1) y
-                          | otherwise            = (a !! x, b !! y) :traceback (x-1) (y-1)
+        traceback x y     | x == 0               = (' '    , b @! y):traceback 0     (y-1)
+                          | y == 0               = (a @! x ,  ' '  ):traceback (x-1) 0
+                          | x @@ y == x @@ y-1   = (' ', b @! y)    :traceback x     (y-1)
+                          | x @@ y == x-1 @@ y   = (a @! x, ' ')    :traceback (x-1) y
+                          | otherwise            = (a @! x, b @! y) :traceback (x-1) (y-1)
         format l = [map fst l, map snd l]
