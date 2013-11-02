@@ -9,7 +9,7 @@ import Data.Monoid (mconcat)
 import qualified Data.Text.Lazy as T
 --import Control.Monad
 
-import Align
+import AlignPar
 
 --xxx = 1 + "2"
 
@@ -29,7 +29,7 @@ needleAction :: ActionM ()
 needleAction = do
     string1 <- param "string1"
     string2 <- param "string2"
-    text $ T.pack $ show $ Align.align  string1  string2
+    text $ T.pack $ show $ align  string1  string2
 
 --needleActionBS :: ActionM ()
 --needleActionBS = do
