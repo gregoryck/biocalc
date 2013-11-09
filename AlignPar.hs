@@ -57,6 +57,7 @@ addGaps = undefined
 lookUp :: Grid -> Int -> Int -> Cell
 lookUp (Grid a) n1 n2 =  a ! n1 ! n2
 
+
 makeGrid :: Seq -> Seq -> Grid
 makeGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0 .. (BS.length s1) - 1]
     where
@@ -66,13 +67,15 @@ makeGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0 .
             where
                 bestScore :: Int -> Cell
                 bestScore 0 = Cell (similarityScore (BS.index s1 idx) ( BS.index s2 0)) Across
-                bestScore idx2 | up <= across && up <= diag     = undefined
-                               | across <= up && across <= diag = undefined
-                               | otherwise                      = undefined
-                    where
-                        diag = lookUp (makeGrid s1 s2) (idx-1) (idx2-1)
-                        across = lookUp (makeGrid s1 s2) (idx-1) idx2
-                        up = lookUp (makeGrid s1 s2) idx (idx2-1)
+                bestScore idx2 | (up idx2) >= (across idx2) && (up idx2) >= (diag idx2)     = up idx2
+                               | (across idx2) >= (up idx2) && (across idx2) >= (diag idx2) = across idx2
+                               | otherwise                                                  = diag idx2
+
+                diag idx2   = lookUp (makeGrid s1 s2) (idx-1) (idx2-1)               +* similarityScore (BS.index s1 idx) (BS.index s2 idx2)
+                across idx2 = (lookUp (makeGrid s1 s2) (idx-1) idx2)   -* gapPenalty +* similarityScore (BS.index s1 idx) (BS.index s2 idx2)
+                up idx2     = (lookUp (makeGrid s1 s2) idx (idx2-1))   -* gapPenalty +* similarityScore (BS.index s1 idx) (BS.index s2 idx2)
+
+
 
 
 --SimilarityScoreAt :: Seq -> Int -> Seq -> Int -> Int
@@ -84,6 +87,13 @@ makeGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0 .
 similarityScore :: Char -> Char -> Int
 similarityScore c1 c2 | c1 == c2  = 2
                       | otherwise = -1
+
+(-*) :: Cell -> Int -> Cell
+(-*) (Cell n dir) n' = Cell (n - n') dir
+(+*) :: Cell -> Int -> Cell
+(+*) (Cell n dir) n' = Cell (n + n') dir
+
+gapPenalty = 3
 
 --align :: BS.ByteString -> BS.ByteString -> [BS.ByteString]
 --align da db = map BS.pack $ format $ reverse $ traceback lena lenb
