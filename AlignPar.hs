@@ -40,24 +40,40 @@ data Dir = Up | Across | Diag deriving Show
 
 data Cell = Cell Int Dir deriving Show
 
+instance Eq Cell where
+    Cell n _ == Cell n' _ = n == n'
+
+instance Ord Cell where
+    Cell n _ <= Cell n' _ = n <= n'
+
+cellScore :: Cell -> Int
+cellScore (Cell n _) = n
+
 data Grid = Grid (Array Int (Array Int Cell)) deriving Show
 
 addGaps :: Grid -> Seq -> Seq
 addGaps = undefined
 
 lookUp :: Grid -> Int -> Int -> Cell
-lookUp g n1 n2 =  g ! n1 ! n2
+lookUp (Grid a) n1 n2 =  a ! n1 ! n2
 
 makeGrid :: Seq -> Seq -> Grid
-makeGrid s1 s2 = Grid $ listArray (0, BS.length s1) $ map arrayForIdx [0 .. BS.length s1]
+makeGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0 .. (BS.length s1) - 1]
     where
         arrayForIdx :: Int -> Array Int Cell
-        arrayForIdx 0   = listArray (0, BS.length s2) $ [Cell (similarityScore (BS.index s1 0) (BS.index s2 idx2)) Up | idx2 <- [0 .. BS.length s2]]
-        arrayForIdx idx = listArray (0, BS.length s2) $ map bestScore [0 .. BS.length s2]
+        arrayForIdx 0   = listArray (0, (BS.length s2) - 1) $ [Cell (similarityScore (BS.index s1 0) (BS.index s2 idx2)) Up | idx2 <- [0 .. (BS.length s2) - 1]]
+        arrayForIdx idx = listArray (0, (BS.length s2) - 1) $ map bestScore [0 .. BS.length s2]
             where
                 bestScore :: Int -> Cell
-                -- bestScore 0 = Cell (similarityScore (BS.index s1 idx) ( BS.index s2 0)) Across
-                bestScore idx2 = undefined -- | makeGrid s1 s2
+                bestScore 0 = Cell (similarityScore (BS.index s1 idx) ( BS.index s2 0)) Across
+                bestScore idx2 | up <= across && up <= diag     = undefined
+                               | across <= up && across <= diag = undefined
+                               | otherwise                      = undefined
+                    where
+                        diag = lookUp (makeGrid s1 s2) (idx-1) (idx2-1)
+                        across = lookUp (makeGrid s1 s2) (idx-1) idx2
+                        up = lookUp (makeGrid s1 s2) idx (idx2-1)
+
 
 --SimilarityScoreAt :: Seq -> Int -> Seq -> Int -> Int
 --difference s1 n1 s2 n2 | BS.index s1 n1 == BS.index s2 n2 = 2 --matches
