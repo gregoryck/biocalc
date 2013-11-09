@@ -34,7 +34,7 @@ align s1 s2 = Aln s1_gaps s2_gaps
     where
         s1_gaps = addGaps grid s1
         s2_gaps = addGaps grid s2
-        grid = makeGrid s1 s2
+        grid = myGrid s1 s2
 
 data Dir = Up | Across | Diag deriving Show
 
@@ -58,22 +58,22 @@ lookUp :: Grid -> Int -> Int -> Cell
 lookUp (Grid a) n1 n2 =  a ! n1 ! n2
 
 
-makeGrid :: Seq -> Seq -> Grid
-makeGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0 .. (BS.length s1) - 1]
+myGrid :: Seq -> Seq -> Grid
+myGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0..]
     where
         arrayForIdx :: Int -> Array Int Cell
-        arrayForIdx 0   = listArray (0, (BS.length s2) - 1) $ [Cell (similarityScore (BS.index s1 0) (BS.index s2 idx2)) Up | idx2 <- [0 .. (BS.length s2) - 1]]
-        arrayForIdx idx = listArray (0, (BS.length s2) - 1) $ map bestScore [0 .. BS.length s2]
+        arrayForIdx 0   = listArray (0, (BS.length s2) - 1) $ [Cell (scoreAt s1 0 s2 idx2) Up -* gapPenalty | idx2 <- [0..]]
+        arrayForIdx idx = listArray (0, (BS.length s2) - 1) $ map bestScore [0..]
             where
                 bestScore :: Int -> Cell
-                bestScore 0 = Cell (similarityScore (BS.index s1 idx) ( BS.index s2 0)) Across
+                bestScore 0 = Cell (scoreAt s1 idx s2 0) Across -* gapPenalty
                 bestScore idx2 | (up idx2) >= (across idx2) && (up idx2) >= (diag idx2)     = up idx2
                                | (across idx2) >= (up idx2) && (across idx2) >= (diag idx2) = across idx2
                                | otherwise                                                  = diag idx2
 
-                diag idx2   = lookUp (makeGrid s1 s2) (idx-1) (idx2-1)               +* similarityScore (BS.index s1 idx) (BS.index s2 idx2)
-                across idx2 = (lookUp (makeGrid s1 s2) (idx-1) idx2)   -* gapPenalty +* similarityScore (BS.index s1 idx) (BS.index s2 idx2)
-                up idx2     = (lookUp (makeGrid s1 s2) idx (idx2-1))   -* gapPenalty +* similarityScore (BS.index s1 idx) (BS.index s2 idx2)
+                diag idx2   = lookUp (myGrid s1 s2) (idx-1) (idx2-1)               +* (scoreAt s1 idx s2 idx2)
+                across idx2 = (lookUp (myGrid s1 s2) (idx-1) idx2)   -* gapPenalty +* (scoreAt s1 idx s2 idx2)
+                up idx2     = (lookUp (myGrid s1 s2) idx (idx2-1))   -* gapPenalty +* (scoreAt s1 idx s2 idx2)
 
 
 
@@ -83,6 +83,8 @@ makeGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0 .
                        -- | otherwise                  = -1 --doesn't match
 
 
+scoreAt :: Seq -> Int -> Seq -> Int -> Int
+scoreAt s1 i1 s2 i2 = similarityScore (BS.index s1 i1) (BS.index s2 i2)
 
 similarityScore :: Char -> Char -> Int
 similarityScore c1 c2 | c1 == c2  = 2
