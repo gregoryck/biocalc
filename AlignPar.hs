@@ -13,9 +13,6 @@ tobs = BS.pack
 space :: BS.ByteString
 space = tobs " "
 
-(@!) :: BS.ByteString -> Int -> Char
-(@!) = BS.index
-
 ----format :: [(a, a)] -> [[a]]
 --format l = [map fst l, map snd l]
 
@@ -39,24 +36,38 @@ align s1 s2 = Aln s1_gaps s2_gaps
         s2_gaps = addGaps grid s2
         grid = makeGrid s1 s2
 
-data Grid = Grid (Array Int (Array Int Int)) deriving Show
+data Dir = Up | Across | Diag deriving Show
+
+data Cell = Cell Int Dir deriving Show
+
+data Grid = Grid (Array Int (Array Int Cell)) deriving Show
 
 addGaps :: Grid -> Seq -> Seq
 addGaps = undefined
 
+lookUp :: Grid -> Int -> Int -> Cell
+lookUp g n1 n2 =  g ! n1 ! n2
+
 makeGrid :: Seq -> Seq -> Grid
 makeGrid s1 s2 = Grid $ listArray (0, BS.length s1) $ map arrayForIdx [0 .. BS.length s1]
     where
-        arrayForIdx :: Int -> Array Int Int
+        arrayForIdx :: Int -> Array Int Cell
+        arrayForIdx 0   = listArray (0, BS.length s2) $ [Cell (similarityScore (BS.index s1 0) (BS.index s2 idx2)) Up | idx2 <- [0 .. BS.length s2]]
         arrayForIdx idx = listArray (0, BS.length s2) $ map bestScore [0 .. BS.length s2]
+            where
+                bestScore :: Int -> Cell
+                -- bestScore 0 = Cell (similarityScore (BS.index s1 idx) ( BS.index s2 0)) Across
+                bestScore idx2 = undefined -- | makeGrid s1 s2
 
-        bestScore :: Int -> Int
-        bestScore = undefined
+--SimilarityScoreAt :: Seq -> Int -> Seq -> Int -> Int
+--difference s1 n1 s2 n2 | BS.index s1 n1 == BS.index s2 n2 = 2 --matches
+                       -- | otherwise                  = -1 --doesn't match
 
-difference :: Seq -> Int -> Seq -> Int -> Int
-difference s1 n1 s2 n2 | BS.index s1 n1 == BS.index s2 n2 = 2 --matches
-                       | otherwise                  = -1 --doesn't match
 
+
+similarityScore :: Char -> Char -> Int
+similarityScore c1 c2 | c1 == c2  = 2
+                      | otherwise = -1
 
 --align :: BS.ByteString -> BS.ByteString -> [BS.ByteString]
 --align da db = map BS.pack $ format $ reverse $ traceback lena lenb
