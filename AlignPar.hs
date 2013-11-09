@@ -36,44 +36,75 @@ align s1 s2 = Aln s1_gaps s2_gaps
         s2_gaps = addGaps grid s2
         grid = myGrid s1 s2
 
-data Dir = Up | Across | Diag | Start deriving Show
+--data Dir = Up | Across | Diag | Start deriving Show
 
-data Cell = Cell Int Dir deriving Show
+data Cell = Up Int | Across Int | Diag Int | Start Int deriving (Show, Eq, Ord)
 
-instance Eq Cell where
-    Cell n _ == Cell n' _ = n == n'
+--instance Eq Cell where
+--    Up n  == Up n' = n == n'
+--    Up n  == Across n' = n == n'
+--    Up n  == Diag n' = n == n'
+--    Across n  == Across n' = n == n'
+--    Across n  == Diag n' = n == n'
+--    Diag n  == Diag n' = n == n'
 
-instance Ord Cell where
-    Cell n _ <= Cell n' _ = n <= n'
+--instance Ord Cell where
+--    Up n  <= Up n' = n <= n'
+--    Up n  <= Across n' = n <= n'
+--    Up n  <= Diag n' = n <= n'
+--    Across n  <= Across n' = n <= n'
+--    Across n  <= Diag n' = n <= n'
+--    Diag n  <= Diag n' = n <= n'
 
 cellScore :: Cell -> Int
-cellScore (Cell n _) = n
+cellScore (Up n) = n
+cellScore (Diag n) = n
+cellScore (Across n) = n
+cellScore (Start n) = n
 
 data Grid = Grid (Array Int (Array Int Cell)) deriving Show
 
 addGaps :: Grid -> Seq -> Seq
 addGaps = undefined
+--addGaps grid s1 s2 = addGaps' grid s1
+--addGaps' :: Grid -> Seq -> Int -> Seq -> Int -> (String, String)
+--addGaps'
+--addGaps' grid s1 n1 s2 n2 | grid ! n1 ! n2 = Cell
 
 lookUp :: Grid -> Int -> Int -> Cell
 lookUp (Grid a) n1 n2 =  a ! n1 ! n2
 
+scoreOf :: Cell -> Int
+scoreOf (Diag n) = n
+scoreOf (Across n) = n
+scoreOf (Up n) = n
+scoreOf (Start n) = n
+
+diagTo :: Cell -> Cell
+diagTo cell = Diag (scoreOf cell)
+
+acrossTo :: Cell -> Cell
+acrossTo cell = Across (scoreOf cell)
+
+upTo :: Cell -> Cell
+upTo cell = Up (scoreOf cell)
 
 myGrid :: Seq -> Seq -> Grid
 myGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0..]
     where
         arrayForIdx :: Int -> Array Int Cell
-        arrayForIdx 0   = listArray (0, (BS.length s2) - 1) $ Cell (scoreAt s1 0 s2 0) Start : [Cell (scoreAt s1 0 s2 idx2) Up -* gapPenalty | idx2 <- [1..]]
+        arrayForIdx 0   = listArray (0, (BS.length s2) - 1) $ Start (scoreAt s1 0 s2 0) : [Up (scoreAt s1 0 s2 idx2) -* gapPenalty | idx2 <- [1..]]
         arrayForIdx idx = listArray (0, (BS.length s2) - 1) $ map bestScore [0..]
             where
                 bestScore :: Int -> Cell
-                bestScore 0 = Cell (scoreAt s1 idx s2 0) Across -* gapPenalty
+                bestScore 0 = Across (scoreAt s1 idx s2 0) -* gapPenalty
                 bestScore idx2 | (up idx2) >= (across idx2) && (up idx2) >= (diag idx2)     = up idx2
                                | (across idx2) >= (up idx2) && (across idx2) >= (diag idx2) = across idx2
                                | otherwise                                                  = diag idx2
 
-                diag idx2   = lookUp (myGrid s1 s2) (idx-1) (idx2-1)               +* (scoreAt s1 idx s2 idx2)
-                across idx2 = (lookUp (myGrid s1 s2) (idx-1) idx2)   -* gapPenalty +* (scoreAt s1 idx s2 idx2)
-                up idx2     = (lookUp (myGrid s1 s2) idx (idx2-1))   -* gapPenalty +* (scoreAt s1 idx s2 idx2)
+                diag idx2   = diagTo (lookUp (myGrid s1 s2) (idx-1) (idx2-1)) +* (scoreAt s1 idx s2 idx2)
+                across idx2 = acrossTo (lookUp (myGrid s1 s2) (idx-1) idx2)   +* (scoreAt s1 idx s2 idx2)
+                up idx2     = upTo (lookUp (myGrid s1 s2) idx (idx2-1))       +* (scoreAt s1 idx s2 idx2)
 
 
 
@@ -91,9 +122,14 @@ similarityScore c1 c2 | c1 == c2  = 2
                       | otherwise = -1
 
 (-*) :: Cell -> Int -> Cell
-(-*) (Cell n dir) n' = Cell (n - n') dir
+(-*) (Across n) n' = Across (n - n')
+(-*) (Up n) n' = Up (n - n')
+(-*) (Diag n) n' = Diag (n - n')
+
 (+*) :: Cell -> Int -> Cell
-(+*) (Cell n dir) n' = Cell (n + n') dir
+(+*) (Diag n) n' = Diag (n + n')
+(+*) (Across n) n' = Across (n + n')
+(+*) (Up n) n' = Up (n + n')
 
 gapPenalty = 3
 
