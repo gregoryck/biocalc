@@ -13,10 +13,6 @@ tobs = BS.pack
 space :: BS.ByteString
 space = tobs " "
 
-----format :: [(a, a)] -> [[a]]
---format l = [map fst l, map snd l]
-
-
 --traverseWithKey :: Applicative t => (Key -> a -> t b) -> IntMap a -> t (IntMap b)
 --fork :: Par () -> Par ()
 --spawn :: NFData a => Par a -> Par (IVar a)
@@ -36,7 +32,8 @@ align s1 s2 = Aln s1_gaps s2_gaps
         s2_gaps = addGaps grid s2
         grid = myGrid s1 s2
 
---data Dir = Up | Across | Diag | Start deriving Show
+addGaps :: Grid -> Seq -> Seq
+addGaps = undefined
 
 data Cell = Up Int | Across Int | Diag Int | Start Int deriving (Show, Eq, Ord)
 
@@ -64,12 +61,27 @@ cellScore (Start n) = n
 
 data Grid = Grid (Array Int (Array Int Cell)) deriving Show
 
-addGaps :: Grid -> Seq -> Seq
-addGaps = undefined
---addGaps grid s1 s2 = addGaps' grid s1
---addGaps' :: Grid -> Seq -> Int -> Seq -> Int -> (String, String)
---addGaps'
---addGaps' grid s1 n1 s2 n2 | grid ! n1 ! n2 = Cell
+
+aArray = listArray (0,2) [Up 1, Up 1, Up 1]
+--aGrid = Grid (listArray (0,2) $ repeat aArray) 1
+
+path :: Grid -> [Cell]
+path g@(Grid array1) = path' g x y []
+    where
+        (x, y) = bounds array1
+
+path' :: Grid -> Int -> Int -> [Cell] -> [Cell]
+path' g' x y accum  | x == 0 && y == 0 = cell:accum
+                    | x == 0 = path' g' 0 (y-1) (cell:accum)
+                    | y == 0 = path' g' (x-1) 0  (cell:accum)
+                    | (cellScore up) > (cellScore across) && (cellScore up) > (cellScore diag) = path' g' x (y-1) (cell:accum)
+                    | (cellScore across) > (cellScore diag) = path' g' (x-1) y (cell:accum)
+                    | otherwise = path' g' (x-1) (y-1) (cell:accum)
+    where
+        across = lookUp g' (x-1) y
+        diag = lookUp g' (x-1) (y-1)
+        up = lookUp g' x (y-1)
+        cell = lookUp g' x y
 
 lookUp :: Grid -> Int -> Int -> Cell
 lookUp (Grid a) n1 n2 =  a ! n1 ! n2
@@ -106,14 +118,6 @@ myGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0..]
                 across idx2 = acrossTo (lookUp (myGrid s1 s2) (idx-1) idx2)   +* (scoreAt s1 idx s2 idx2)
                 up idx2     = upTo (lookUp (myGrid s1 s2) idx (idx2-1))       +* (scoreAt s1 idx s2 idx2)
 
-
-
-
---SimilarityScoreAt :: Seq -> Int -> Seq -> Int -> Int
---difference s1 n1 s2 n2 | BS.index s1 n1 == BS.index s2 n2 = 2 --matches
-                       -- | otherwise                  = -1 --doesn't match
-
-
 scoreAt :: Seq -> Int -> Seq -> Int -> Int
 scoreAt s1 i1 s2 i2 = similarityScore (BS.index s1 i1) (BS.index s2 i2)
 
@@ -132,6 +136,11 @@ similarityScore c1 c2 | c1 == c2  = 2
 (+*) (Up n) n' = Up (n + n')
 
 gapPenalty = 3
+
+
+-- -----------
+-- Old version
+-- -----------
 
 --align :: BS.ByteString -> BS.ByteString -> [BS.ByteString]
 --align da db = map BS.pack $ format $ reverse $ traceback lena lenb

@@ -37,6 +37,12 @@ doList = traverseWithKey listFromKey theMap
 
 
 
+xList = do
+    y <- [1..6]
+    z <- [1..9]
+    return (y,z)
+
+
 --rp = get $ runPar $ spawn $ return 1
 
 
