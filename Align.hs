@@ -10,8 +10,8 @@ tobs = BS.pack
 space :: BS.ByteString
 space = tobs " "
 
-(@!) :: BS.ByteString -> Int -> Char
-(@!) = BS.index
+ind :: BS.ByteString -> Int -> Char
+ind = BS.index
 
 format :: [(a, a)] -> [[a]]
 format l = [map fst l, map snd l]
@@ -41,8 +41,8 @@ align da db = map BS.pack $ format $ reverse $ traceback lena lenb
 
         traceback :: Int -> Int -> [(Char, Char)]
         traceback 0 0 = []
-        traceback x y     | x == 0               = (' '    , b @! y):traceback 0     (y-1)
-                          | y == 0               = (a @! x ,  ' '  ):traceback (x-1) 0
-                          | x @@ y == x @@ y-1   = (' ', b @! y)    :traceback x     (y-1)
-                          | x @@ y == x-1 @@ y   = (a @! x, ' ')    :traceback (x-1) y
-                          | otherwise            = (a @! x, b @! y) :traceback (x-1) (y-1)
+        traceback x y     | x == 0               = (' '    , b `ind` y):traceback 0     (y-1)
+                          | y == 0               = (a `ind` x ,  ' '  ):traceback (x-1) 0
+                          | x @@ y == x @@ y-1   = (' ', b `ind` y)    :traceback x     (y-1)
+                          | x @@ y == x-1 @@ y   = (a `ind` x, ' ')    :traceback (x-1) y
+                          | otherwise            = (a `ind` x, b `ind` y) :traceback (x-1) (y-1)
