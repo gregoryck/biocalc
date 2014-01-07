@@ -62,8 +62,14 @@ cellScore (Start n) = n
 data Grid = Grid (Array Int (Array Int Cell)) deriving Show
 
 
+aArray :: Array Int Cell
 aArray = listArray (0,2) [Up 1, Up 1, Up 1]
---aGrid = Grid (listArray (0,2) $ repeat aArray) 1
+aGrid :: Grid
+aGrid = Grid $ (listArray (0,2) $ repeat aArray)
+
+
+gridBounds g@(Grid array0@(listArray (x0, y0) lst)) = (bounds array0, bounds $ head lst)
+
 
 path :: Grid -> [Cell]
 path g@(Grid array1) = path' g x y []
@@ -74,8 +80,11 @@ path' :: Grid -> Int -> Int -> [Cell] -> [Cell]
 path' g' x y accum  | x == 0 && y == 0 = cell:accum
                     | x == 0 = path' g' 0 (y-1) (cell:accum)
                     | y == 0 = path' g' (x-1) 0  (cell:accum)
-                    | (cellScore up) > (cellScore across) && (cellScore up) > (cellScore diag) = path' g' x (y-1) (cell:accum)
-                    | (cellScore across) > (cellScore diag) = path' g' (x-1) y (cell:accum)
+                    | (cellScore up) > (cellScore across) &&
+                      (cellScore up) > (cellScore diag) =
+                        path' g' x (y-1) (cell:accum)
+                    | (cellScore across) > (cellScore diag) =
+                        path' g' (x-1) y (cell:accum)
                     | otherwise = path' g' (x-1) (y-1) (cell:accum)
     where
         across = lookUp g' (x-1) y
