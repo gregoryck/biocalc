@@ -63,12 +63,13 @@ data Grid = Grid (Array Int (Array Int Cell)) deriving Show
 
 
 aArray :: Array Int Cell
-aArray = listArray (0,2) [Up 1, Up 1, Up 1]
+aArray = listArray (0,4) [Up 1, Up 1, Up 1, Up 1, Up 1]
 aGrid :: Grid
 aGrid = Grid $ (listArray (0,2) $ repeat aArray)
 
 
-gridBounds g@(Grid array0@(listArray (x0, y0) lst)) = (bounds array0, bounds $ head lst)
+gridBounds g@(Grid array0) = (snd $ bounds $ array0,
+                              snd $ bounds $ (array0 ! 0))
 
 
 path :: Grid -> [Cell]
