@@ -6,6 +6,7 @@ import Control.Monad.Par.Scheds.Trace as P
 import Data.Array
 --import Data.IntMap hiding (map)
 import Data.Traversable
+--import Debug.Trace (trace)
 
 tobs :: String -> BS.ByteString
 tobs = BS.pack
@@ -63,9 +64,9 @@ data Grid = Grid (Array Int (Array Int Cell)) deriving Show
 
 
 aArray :: Array Int Cell
-aArray = listArray (0,4) [Up 1, Up 1, Up 1, Up 1, Up 1]
-aGrid :: Grid
-aGrid = Grid $ (listArray (0,2) $ repeat aArray)
+aArray = listArray (0,4) [Start 1, Up 1, Up 1, Up 1, Up 1]
+badGrid :: Grid
+badGrid = Grid $ (listArray (0,2) $ repeat aArray)
 
 
 gridBounds g@(Grid array0) = (snd $ bounds $ array0,
@@ -73,25 +74,19 @@ gridBounds g@(Grid array0) = (snd $ bounds $ array0,
 
 
 path :: Grid -> [Cell]
-path g@(Grid array1) = path' g x y []
+path g = path' g x y []
     where
-        (x, y) = bounds array1
+        (x, y) = gridBounds g
 
+-- this will runtime exception on a malformed Grid
 path' :: Grid -> Int -> Int -> [Cell] -> [Cell]
-path' g' x y accum  | x == 0 && y == 0 = cell:accum
-                    | x == 0 = path' g' 0 (y-1) (cell:accum)
-                    | y == 0 = path' g' (x-1) 0  (cell:accum)
-                    | (cellScore up) > (cellScore across) &&
-                      (cellScore up) > (cellScore diag) =
-                        path' g' x (y-1) (cell:accum)
-                    | (cellScore across) > (cellScore diag) =
-                        path' g' (x-1) y (cell:accum)
-                    | otherwise = path' g' (x-1) (y-1) (cell:accum)
-    where
-        across = lookUp g' (x-1) y
-        diag = lookUp g' (x-1) (y-1)
-        up = lookUp g' x (y-1)
-        cell = lookUp g' x y
+path' g' x y accum = case cell of
+                        Up score     -> path' g' x (y-1) (cell:accum)
+                        Across score -> path' g' (x-1) y (cell:accum)
+                        Diag score   -> path' g' (x-1) (y-1) (cell:accum)
+                        Start score  -> cell:accum
+                     where
+                        cell = lookUp g' x y
 
 lookUp :: Grid -> Int -> Int -> Cell
 lookUp (Grid a) n1 n2 =  a ! n1 ! n2
