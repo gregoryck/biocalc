@@ -38,28 +38,6 @@ addGaps = undefined
 
 data Cell = Up Int | Across Int | Diag Int | Start Int deriving (Show, Eq, Ord)
 
---instance Eq Cell where
---    Up n  == Up n' = n == n'
---    Up n  == Across n' = n == n'
---    Up n  == Diag n' = n == n'
---    Across n  == Across n' = n == n'
---    Across n  == Diag n' = n == n'
---    Diag n  == Diag n' = n == n'
-
---instance Ord Cell where
---    Up n  <= Up n' = n <= n'
---    Up n  <= Across n' = n <= n'
---    Up n  <= Diag n' = n <= n'
---    Across n  <= Across n' = n <= n'
---    Across n  <= Diag n' = n <= n'
---    Diag n  <= Diag n' = n <= n'
-
-cellScore :: Cell -> Int
-cellScore (Up n) = n
-cellScore (Diag n) = n
-cellScore (Across n) = n
-cellScore (Start n) = n
-
 data Grid = Grid (Array Int (Array Int Cell)) deriving Show
 
 
@@ -68,6 +46,11 @@ aArray = listArray (0,4) [Start 1, Up 1, Up 1, Up 1, Up 1]
 badGrid :: Grid
 badGrid = Grid $ (listArray (0,2) $ repeat aArray)
 
+goodGrid = Grid $ listArray (0,3) $ [listArray (0,3) [Start 0, Up 1, Up 2, Up 3],
+                                     listArray (0,3) [Across 1, Across 2, Up 3, Up 4],
+                                     listArray (0,3) [Across 2, Diag 2, Diag 3, Diag 4],
+                                     listArray (0,3) [Across 3, Diag 2, Diag 3, Diag 4]
+                                    ]
 
 gridBounds g@(Grid array0) = (snd $ bounds $ array0,
                               snd $ bounds $ (array0 ! 0))
@@ -142,44 +125,3 @@ similarityScore c1 c2 | c1 == c2  = 2
 
 gapPenalty = 3
 
-
--- -----------
--- Old version
--- -----------
-
---align :: BS.ByteString -> BS.ByteString -> [BS.ByteString]
---align da db = map BS.pack $ format $ reverse $ traceback lena lenb
---    where
---        lena = BS.length da
---        lenb = BS.length db
---        a = BS.append space da
---        b = BS.append space db
-
---        memscore :: IVar (IntMap Int)
---        memscore = runPar $ do
---                        m <- buildTraverse
---                        traverse get m
-
---        buildTraverse :: Par (IVar (IntMap Int))
---        buildTraverse = undefined
-
-
---        infix 5 @@
---        (@@) i j = (memscore ! i) ! j
-
---        score :: Int -> Int -> Int
---        score 0 _ = 0
---        score _ 0 = 0
---        score x y = maximum [(x-1 @@ y - 1)  + difference x y,
---                             x-1  @@ y,
---                             x    @@ y-1]
-
-
-
---        traceback :: Int -> Int -> [(Char, Char)]
---        traceback 0 0 = []
---        traceback x y     | x == 0               = (' '    , b @! y):traceback 0     (y-1)
---                          | y == 0               = (a @! x ,  ' '  ):traceback (x-1) 0
---                          | x @@ y == x @@ y-1   = (' ', b @! y)    :traceback x     (y-1)
---                          | x @@ y == x-1 @@ y   = (a @! x, ' ')    :traceback (x-1) y
---                          | otherwise            = (a @! x, b @! y) :traceback (x-1) (y-1)
