@@ -1,6 +1,6 @@
 
 module AlignPar where
-import Data.ByteString.Char8 as BS hiding (map)
+import Data.ByteString.Char8 as BS hiding (map, concat, zip)
 
 import Control.Monad.Par.Scheds.Trace as P
 import Data.Array
@@ -26,15 +26,28 @@ space = tobs " "
 type Seq = ByteString
 data Aln = Aln ByteString ByteString deriving Show
 
+data SeqPosition = Top | Side
+
 align :: Seq -> Seq -> Aln
 align s1 s2 = Aln s1_gaps s2_gaps
     where
-        s1_gaps = addGaps grid s1
-        s2_gaps = addGaps grid s2
+        s1_gaps = addGaps Top grid s1
+        s2_gaps = addGaps Side grid s2
         grid = myGrid s1 s2
 
-addGaps :: Grid -> Seq -> Seq
-addGaps = undefined
+addGaps :: SeqPosition -> Grid -> Seq -> Seq
+addGaps pos g s = BS.pack $ concat $ [letterWithGaps pos x | x <- zip (path g) (BS.unpack s)]
+
+
+-- FIXME this behaves differently for the top and side sequences.
+-- which are we?
+letterWithGaps :: SeqPosition -> (Cell, Char) -> [Char]
+letterWithGaps Top (Across _, c) = [' ', c]
+letterWithGaps Top (Up _, c) = [c]
+letterWithGaps Side (Across _, c) = [c]
+letterWithGaps Side (Up _, c) = [' ', c]
+letterWithGaps _ (Diag _, c) = [c]
+letterWithGaps _ (Start _, c) = [c]
 
 data Cell = Up Int | Across Int | Diag Int | Start Int deriving (Show, Eq, Ord)
 
