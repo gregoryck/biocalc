@@ -29,9 +29,9 @@ data SeqPosition = Top | Side
 align :: Seq -> Seq -> Aln
 align s1 s2 = Aln s1_gaps s2_gaps
     where
-        s1_gaps = addGaps Side grid s1
-        s2_gaps = addGaps Top grid s2
-        grid = myGrid s1 s2
+        s1_gaps = addGaps Side g s1
+        s2_gaps = addGaps Top g s2
+        g = grid s1 s2
 
 addGaps :: SeqPosition -> Grid -> Seq -> Seq
 addGaps pos g s = BS.pack $ concat $ [letterWithGaps pos x | x <- zip (path g) (BS.unpack s)]
@@ -98,8 +98,8 @@ acrossTo cell = Across (scoreOf cell)
 upTo :: Cell -> Cell
 upTo cell = Up (scoreOf cell)
 
-myGrid :: Seq -> Seq -> Grid
-myGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0..]
+grid :: Seq -> Seq -> Grid
+grid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0..]
     where
         arrayForIdx :: Int -> Array Int Cell
         arrayForIdx 0   = listArray (0, (BS.length s2) - 1) $ Start (scoreAt s1 0 s2 0) : [Up (scoreAt s1 0 s2 idx2) -* gapPenalty | idx2 <- [1..]]
@@ -111,9 +111,9 @@ myGrid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0..]
                                | (across idx2) >= (up idx2) && (across idx2) >= (diag idx2) = across idx2
                                | otherwise                                                  = diag idx2
 
-                diag idx2   = diagTo (lookUp (myGrid s1 s2) (idx-1) (idx2-1)) +* (scoreAt s1 idx s2 idx2)
-                across idx2 = acrossTo (lookUp (myGrid s1 s2) (idx-1) idx2)   +* (scoreAt s1 idx s2 idx2)
-                up idx2     = upTo (lookUp (myGrid s1 s2) idx (idx2-1))       +* (scoreAt s1 idx s2 idx2)
+                diag idx2   = diagTo (lookUp (grid s1 s2) (idx-1) (idx2-1)) +* (scoreAt s1 idx s2 idx2)
+                across idx2 = acrossTo (lookUp (grid s1 s2) (idx-1) idx2)   +* (scoreAt s1 idx s2 idx2)
+                up idx2     = upTo (lookUp (grid s1 s2) idx (idx2-1))       +* (scoreAt s1 idx s2 idx2)
 
 scoreAt :: Seq -> Int -> Seq -> Int -> Int
 scoreAt s1 i1 s2 i2 = similarityScore (BS.index s1 i1) (BS.index s2 i2)
