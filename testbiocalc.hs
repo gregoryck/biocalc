@@ -5,13 +5,19 @@ import Test.QuickCheck
 import AlignPar as AP
 --import Align as A
 import Data.Array
+import Control.Monad
 --import Data.Char
 
 import Data.ByteString.Char8 as BS hiding (map, concat, zip)
 
+import Debug.Trace
+
 instance Arbitrary BS.ByteString where
     arbitrary :: Gen Seq
     arbitrary = fmap AP.tobs arbitrary
+
+instance Arbitrary Grid where
+    arbitrary = liftM2 grid arbitrary arbitrary
 
 equalsItself :: Seq -> Bool
 equalsItself = (\s -> s == s)
@@ -42,9 +48,29 @@ lessThan10 = (<10)
 triviallyTrue :: Property
 triviallyTrue = forAll intslessThan10 lessThan10
 
+pointsToBest :: Grid -> Int -> Int -> Bool
+pointsToBest g x y = case lookUp g x y of
+                        Diag _   -> and [diagScore > upScore,
+                                         diagScore > acrossScore]
+                        Across _ -> and [acrossScore > upScore,
+                                         acrossScore > diagScore]
+                        Up _     -> and [upScore > diagScore,
+                                         upScore > acrossScore]
+                        Start _  -> and [x == 0, y == 0]
+                     where
+                        diagScore = scoreOf $ lookUp g (x - 1) (y - 1)
+                        upScore = scoreOf $ lookUp g x (y - 1)
+                        acrossScore = scoreOf $ lookUp g (x - 1) y
+
+--gridPointsToBest :: Seq -> Seq -> Int -> Int -> Bool
+--gridPointsToBest s1 s2 =
+
+
+
 main :: IO ()
 main = do
     quickCheck equalsItself
     quickCheck equalThemselves
     quickCheck startIsStart
     quickCheck triviallyTrue
+    quickCheck pointsToBest

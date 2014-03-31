@@ -50,10 +50,13 @@ Benchmark bench-biocalc
                      , containers
 
 Test-Suite test-biocalc
+    -- warning: this does not work (always passes)
+    -- need different from exitcode-stdio-1
+    -- run e.g.
+    -- runghc -package-db=/Users/gkettler/haskell/biocalc/.cabal-sandbox/x86_64-osx-ghc-7.6.1-packages.conf.d  testbiocalc.hs
     type:       exitcode-stdio-1.0
     main-is:    testbiocalc.hs
     ghc-options: -Wall
-    build-depends: base, time
     default-language:    Haskell2010
     build-depends:       base >=4.6 && <4.7
                      , scotty == 0.5.0
