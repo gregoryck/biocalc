@@ -10,7 +10,6 @@ import Control.Monad
 
 import Data.ByteString.Char8 as BS hiding (map, concat, zip)
 
-import Debug.Trace
 
 instance Arbitrary BS.ByteString where
     arbitrary :: Gen Seq
@@ -45,8 +44,12 @@ intslessThan10 = suchThat arbitrary (<10)
 lessThan10 :: Int -> Bool
 lessThan10 = (<10)
 
-triviallyTrue :: Property
+triviallyTrue :: Property -- Property is Gen Prop
+                          -- Prop is not used anywhere else
+                          -- but is an instance of Testable
+
 triviallyTrue = forAll intslessThan10 lessThan10
+--              forAll (arbitrary `suchThat` (<10)) lessThan10
 
 pointsToBest :: Grid -> Int -> Int -> Bool
 pointsToBest g x y = case lookUp g x y of
@@ -62,10 +65,34 @@ pointsToBest g x y = case lookUp g x y of
                         upScore = scoreOf $ lookUp g x (y - 1)
                         acrossScore = scoreOf $ lookUp g (x - 1) y
 
---gridPointsToBest :: Seq -> Seq -> Int -> Int -> Bool
---gridPointsToBest s1 s2 =
+inXRangeOfGrid :: Grid -> Int -> Bool
+inXRangeOfGrid g x = and [x >= (fst $ gridBounds g),
+                          x <= (fst $ gridBounds g)]
 
 
+inYRangeOfGrid :: Grid -> Int -> Bool
+inYRangeOfGrid g y = and [y >= (snd $ gridBounds g),
+                          y <= (snd $ gridBounds g)]
+
+data GridAndCoords = GridAndCoords Grid Int Int
+    deriving Show
+instance Arbitrary GridAndCoords where
+    arbitrary = do
+                g <- arbitrary
+                x <- suchThat arbitrary (inXRangeOfGrid g)
+                y <- suchThat arbitrary (inYRangeOfGrid g)
+                return $ GridAndCoords g x y
+
+--gridsWithNiceRanges :: Gen (Grid, Int, Int)
+--gridsWithNiceRanges = do
+--                    g <- arbitrary
+--                    x <- suchThat arbitrary (inXRangeOfGrid g)
+--                    y <- suchThat arbitrary (inYRangeOfGrid g)
+--                    return (g, x, y)
+
+
+trivial2 :: GridAndCoords -> Bool
+trivial2 (GridAndCoords g x y) = True
 
 main :: IO ()
 main = do
@@ -73,4 +100,5 @@ main = do
     quickCheck equalThemselves
     quickCheck startIsStart
     quickCheck triviallyTrue
-    quickCheck pointsToBest
+    --quickCheck pointsToBest
+    quickCheck trivial2
