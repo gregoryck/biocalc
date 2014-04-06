@@ -9,6 +9,7 @@ import Control.Monad
 --import Data.Char
 
 import Data.ByteString.Char8 as BS hiding (map, concat, zip)
+import Debug.Trace
 
 
 instance Arbitrary BS.ByteString where
@@ -65,14 +66,15 @@ pointsToBest g x y = case lookUp g x y of
                         upScore = scoreOf $ lookUp g x (y - 1)
                         acrossScore = scoreOf $ lookUp g (x - 1) y
 
-inXRangeOfGrid :: Grid -> Int -> Bool
-inXRangeOfGrid g x = and [x >= (fst $ gridBounds g),
-                          x <= (fst $ gridBounds g)]
+inRangeOfGrid :: Grid -> ((Int, Int) -> Int) -> Int -> Bool
+inRangeOfGrid g sel x = and [x >= (sel $ gridBounds g),
+                             x <= (sel $ gridBounds g)]
 
+inXRangeOfGrid :: Grid -> Int -> Bool
+inXRangeOfGrid g = inRangeOfGrid g fst
 
 inYRangeOfGrid :: Grid -> Int -> Bool
-inYRangeOfGrid g y = and [y >= (snd $ gridBounds g),
-                          y <= (snd $ gridBounds g)]
+inYRangeOfGrid g = inRangeOfGrid g snd
 
 data GridAndCoords = GridAndCoords Grid Int Int
     deriving Show
@@ -83,16 +85,12 @@ instance Arbitrary GridAndCoords where
                 y <- suchThat arbitrary (inYRangeOfGrid g)
                 return $ GridAndCoords g x y
 
---gridsWithNiceRanges :: Gen (Grid, Int, Int)
---gridsWithNiceRanges = do
---                    g <- arbitrary
---                    x <- suchThat arbitrary (inXRangeOfGrid g)
---                    y <- suchThat arbitrary (inYRangeOfGrid g)
---                    return (g, x, y)
-
-
 trivial2 :: GridAndCoords -> Bool
 trivial2 (GridAndCoords g x y) = True
+
+genWorks :: GridAndCoords -> Bool
+genWorks (GridAndCoords g x y) = and [inXRangeOfGrid (trace "g: " g) x,
+                                      inYRangeOfGrid g y]
 
 main :: IO ()
 main = do
@@ -102,3 +100,4 @@ main = do
     quickCheck triviallyTrue
     --quickCheck pointsToBest
     quickCheck trivial2
+    verboseCheck genWorks
