@@ -1,26 +1,36 @@
-{-# OPTIONS_GHC -Wall -XInstanceSigs #-}
+{-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
+{-# LANGUAGE InstanceSigs #-}
 
 
 import Test.QuickCheck
 import AlignPar as AP
+-- import AlnHtml
 --import Align as A
 import Data.Array
-import Control.Monad
+-- import Control.Monad
 --import Data.Char
 
-import Data.ByteString.Char8 as BS hiding (map, concat, zip)
-import Debug.Trace
+import Data.ByteString.Char8 as BS hiding (map, concat, zip, null)
+-- import Debug.Trace
+
+arbitraryNonEmpty :: Gen String
+arbitraryNonEmpty = arbitrary `suchThat` (not . null)
 
 
 instance Arbitrary BS.ByteString where
     arbitrary :: Gen Seq
-    arbitrary = fmap AP.tobs arbitrary
+    arbitrary = fmap AP.tobs arbitraryNonEmpty
 
 instance Arbitrary Grid where
-    arbitrary = liftM2 grid arbitrary arbitrary
+    arbitrary = do
+        seq1 <- arbitrary
+        seq2 <- arbitrary
+        --return $ grid (trace "Seq1: " seq1) (trace "Seq2: " seq2)
+        return $ grid seq1 seq2
+
 
 equalsItself :: Seq -> Bool
-equalsItself = (\s -> s == s)
+equalsItself s =  s == s
 
 equalThemselves :: [Seq] -> Bool
 equalThemselves xs = and $ map equalsItself xs
@@ -29,7 +39,7 @@ emptyOrFirstIsStart :: Grid -> Bool
 emptyOrFirstIsStart g = or [isEmpty g, isStart $ lookUp g 0 0]
 
 isEmpty :: Grid -> Bool
-isEmpty (Grid array0) = or [(bounds array0) == (0,-1),
+isEmpty (Grid _ _ array0) = or [(bounds array0) == (0,-1),
                             (bounds (array0 ! 0)) == (0,-1)]
 
 isStart :: Cell -> Bool
@@ -81,15 +91,15 @@ data GridAndCoords = GridAndCoords Grid Int Int
 instance Arbitrary GridAndCoords where
     arbitrary = do
                 g <- arbitrary
-                x <- suchThat arbitrary (inXRangeOfGrid g)
-                y <- suchThat arbitrary (inYRangeOfGrid g)
+                x <- choose (0, xMax g - 1)
+                y <- choose (0, yMax g - 1)
                 return $ GridAndCoords g x y
 
 trivial2 :: GridAndCoords -> Bool
-trivial2 (GridAndCoords g x y) = True
+trivial2 (GridAndCoords _ _x _y) = True
 
 genWorks :: GridAndCoords -> Bool
-genWorks (GridAndCoords g x y) = and [inXRangeOfGrid (trace "g: " g) x,
+genWorks (GridAndCoords g x y) = and [inXRangeOfGrid g x,
                                       inYRangeOfGrid g y]
 
 main :: IO ()
@@ -100,4 +110,4 @@ main = do
     quickCheck triviallyTrue
     --quickCheck pointsToBest
     quickCheck trivial2
-    verboseCheck genWorks
+    quickCheck genWorks

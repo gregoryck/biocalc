@@ -46,24 +46,25 @@ letterWithGaps _ (Start _, c) = [c]
 
 data Cell = Up Int | Across Int | Diag Int | Start Int deriving (Show, Eq, Ord)
 
-data Grid = Grid (Array Int (Array Int Cell)) deriving Show
+data Grid = Grid Int Int (Array Int (Array Int Cell)) deriving Show
 
 aArray :: Array Int Cell
 aArray = listArray (0,4) [Start 1, Up 1, Up 1, Up 1, Up 1]
-badGrid :: Grid
-badGrid = Grid $ (listArray (0,2) $ repeat aArray)
+--badGrid :: Grid
+--badGrid = Grid $ (listArray (0,2) $ repeat aArray)
 
 goodGrid :: Grid
-goodGrid = Grid $ listArray (0,3) $ [listArray (0,3) [Start 0, Up 1, Up 2, Up 3],
-                                     listArray (0,3) [Across 1, Across 2, Up 3, Up 4],
-                                     listArray (0,3) [Across 2, Diag 2, Diag 3, Diag 4],
-                                     listArray (0,3) [Across 3, Diag 2, Diag 3, Diag 4]
-                                    ]
+goodGrid = Grid 4 4 $ listArray (0,3) $ [listArray (0,3) [Start 0, Up 1, Up 2, Up 3],
+                                         listArray (0,3) [Across 1, Across 2, Up 3, Up 4],
+                                         listArray (0,3) [Across 2, Diag 2, Diag 3, Diag 4],
+                                         listArray (0,3) [Across 3, Diag 2, Diag 3, Diag 4]
+                                        ]
 
 gridBounds :: Grid -> (Int, Int)
-gridBounds (Grid array0) = (snd $ bounds $ array0,
-                              snd $ bounds $ (array0 ! 0))
+gridBounds (Grid x y array0) = (x,y)
 
+xMax = fst . gridBounds
+yMax = snd . gridBounds
 
 path :: Grid -> [Cell]
 path g = path' g x y []
@@ -81,7 +82,7 @@ path' g' x y accumList = case cell of
                         cell = lookUp g' x y
 
 lookUp :: Grid -> Int -> Int -> Cell
-lookUp (Grid a) n1 n2 =  a ! n1 ! n2
+lookUp (Grid x y a) n1 n2 =  a ! n1 ! n2
 
 scoreOf :: Cell -> Int
 scoreOf (Diag n) = n
@@ -99,11 +100,11 @@ upTo :: Cell -> Cell
 upTo cell = Up (scoreOf cell)
 
 grid :: Seq -> Seq -> Grid
-grid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0..]
+grid s1 s2 = Grid x y $ listArray (0, x - 1) $ map arrayForIdx [0..]
     where
         arrayForIdx :: Int -> Array Int Cell
-        arrayForIdx 0   = listArray (0, (BS.length s2) - 1) $ Start (scoreAt s1 0 s2 0) : [Up (scoreAt s1 0 s2 idx2) -* gapPenalty | idx2 <- [1..]]
-        arrayForIdx idx = listArray (0, (BS.length s2) - 1) $ map bestScore [0..]
+        arrayForIdx 0   = listArray (0, (y) - 1) $ Start (scoreAt s1 0 s2 0) : [Up (scoreAt s1 0 s2 idx2) -* gapPenalty | idx2 <- [1..]]
+        arrayForIdx idx = listArray (0, (y) - 1) $ map bestScore [0..]
             where
                 bestScore :: Int -> Cell
                 bestScore 0 = Across (scoreAt s1 idx s2 0) -* gapPenalty
@@ -114,6 +115,8 @@ grid s1 s2 = Grid $ listArray (0, (BS.length s1) - 1) $ map arrayForIdx [0..]
                 diag idx2   = diagTo (lookUp (grid s1 s2) (idx-1) (idx2-1)) +* (scoreAt s1 idx s2 idx2)
                 across idx2 = acrossTo (lookUp (grid s1 s2) (idx-1) idx2)   +* (scoreAt s1 idx s2 idx2)
                 up idx2     = upTo (lookUp (grid s1 s2) idx (idx2-1))       +* (scoreAt s1 idx s2 idx2)
+        x = BS.length s1
+        y = BS.length s2
 
 scoreAt :: Seq -> Int -> Seq -> Int -> Int
 scoreAt s1 i1 s2 i2 = similarityScore (BS.index s1 i1) (BS.index s2 i2)
@@ -136,4 +139,3 @@ similarityScore c1 c2 | c1 == c2  = 2
 
 gapPenalty :: Int
 gapPenalty = 3
-

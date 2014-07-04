@@ -10,3 +10,4 @@ main = scotty 3000 $ do
     concatenateRoute
     needleRoute
     needleParRoute
+    gridRoute

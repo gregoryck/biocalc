@@ -11,6 +11,7 @@ import qualified Data.Text.Lazy as T
 
 import AlignPar as AP
 import Align as A
+import AlnHtml as AH
 
 --xxx = 1 + "2"
 
@@ -20,7 +21,8 @@ needleRoute :: ScottyM ()
 needleRoute = get "/needle/:string1/:string2/" needleAction
 needleParRoute :: ScottyM ()
 needleParRoute = get "/needlepar/:string1/:string2/" needleActionPar
-
+gridRoute :: ScottyM ()
+gridRoute = get "/grid/:string1/:string2/" gridAction
 
 concatAction :: ActionM ()
 concatAction = do
@@ -39,6 +41,13 @@ needleActionPar = do
     string1 <- param "string1"
     string2 <- param "string2"
     text $ T.pack $ show $ AP.align  string1  string2
+
+gridAction :: ActionM ()
+gridAction = do
+    string1 <- param "string1"
+    string2 <- param "string2"
+    html $ AH.prettyGrid $ AP.grid string1  string2
+    setHeader "Content-Type" "text/html; charset=UTF-8"
 
 --needleActionBS :: ActionM ()
 --needleActionBS :: ActionM ()
