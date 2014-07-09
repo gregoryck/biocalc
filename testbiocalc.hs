@@ -17,6 +17,8 @@ arbitraryNonEmpty :: Gen String
 arbitraryNonEmpty = arbitrary `suchThat` (not . null)
 
 
+
+--TODO instance arbitrary Seq just AGCT ???
 instance Arbitrary BS.ByteString where
     arbitrary :: Gen Seq
     arbitrary = fmap AP.tobs arbitraryNonEmpty
@@ -86,21 +88,47 @@ inXRangeOfGrid g = inRangeOfGrid g fst
 inYRangeOfGrid :: Grid -> Int -> Bool
 inYRangeOfGrid g = inRangeOfGrid g snd
 
-data GridAndCoords = GridAndCoords Grid Int Int
+
+-- this is an ugly, heavyweight thing
+-- including a grid, arbitrary coordinates, and
+-- the arbitrary sequences that produce the grid.
+-- Having the sequences handy is nice for visualizing test failures.
+data GridAndCoords = GridAndCoords Grid Int Int Seq Seq
     deriving Show
 instance Arbitrary GridAndCoords where
     arbitrary = do
-                g <- arbitrary
+                -- g <- arbitrary
+                s1 <- arbitrary
+                s2 <- arbitrary
+                g <- return $ grid s1 s2
                 x <- choose (0, xMax g - 1)
                 y <- choose (0, yMax g - 1)
-                return $ GridAndCoords g x y
+                return $ GridAndCoords g x y s1 s2
+    
+    -- arbitrary = arbitrary >>= \s1 ->
+    --             arbitrary >>= \s2 ->
+    --             liftM2 grid s1 s2 >>= \g ->
+    --             liftM3 GridAndCoords 
+
 
 trivial2 :: GridAndCoords -> Bool
-trivial2 (GridAndCoords _ _x _y) = True
+trivial2 (GridAndCoords _g _x _y _s1 _s2) = True
 
 genWorks :: GridAndCoords -> Bool
-genWorks (GridAndCoords g x y) = and [inXRangeOfGrid g x,
-                                      inYRangeOfGrid g y]
+genWorks (GridAndCoords g x y _s1 _s2) = and [inXRangeOfGrid g x,
+                                            inYRangeOfGrid g y]
+
+genWorksDetail :: Seq -> Seq -> Bool
+genWorksDetail s1 s2 = and [inXRangeOfGrid g x,
+                      inYRangeOfGrid g y]
+                 where
+                   g = grid s1 s2
+                   x = 0 -- hmm
+                   y = 0
+
+
+                                 
+
 
 main :: IO ()
 main = do
@@ -108,6 +136,6 @@ main = do
     quickCheck equalThemselves
     quickCheck startIsStart
     quickCheck triviallyTrue
-    --quickCheck pointsToBest
+    quickCheck pointsToBest
     quickCheck trivial2
     quickCheck genWorks
