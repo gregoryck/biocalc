@@ -11,29 +11,43 @@ import Data.Array
 import Control.Monad
 --import Data.Char
 
--- import Data.ByteString.Char8 as BS hiding (map, concat, zip, null)
+import qualified Data.ByteString.Char8 as BS 
 -- import Debug.Trace
 
 arbitraryNonEmpty :: Gen String
 arbitraryNonEmpty = arbitrary `suchThat` (not . null)
 
+arbitraryNuc :: Gen Char
+arbitraryNuc = 
+  oneof $ map return ['A', 'G', 'C', 'T']
+
 instance Arbitrary Seq where
-    arbitrary :: Gen Seq
     arbitrary = do
         length_ <- choose (1,100)
-        str <- (liftM (take length_) $ listOf arbitrary) :: Gen String
+        str <- (liftM (take length_) $ infiniteListOf arbitraryNuc) :: Gen String
         return $ AP.tobs str
+        -- return $ AP.tobs (trace ("length_ is " ++ (show length_) ++ "str " ++ str) str) 
+               
+arbitrarySeq :: Gen Seq
+arbitrarySeq = do
+        length_ <- choose (1,100)
+        str <- (liftM (take length_) $ listOf arbitraryNuc) :: Gen String
+        return $ AP.tobs str
+        -- return $ AP.tobs (trace ("length_ is" ++ (show length_)) str) 
 
 instance Arbitrary Grid where
     arbitrary = do
-        seq1 <- arbitrary
-        seq2 <- arbitrary
+        seq1 <- arbitrarySeq
+        seq2 <- arbitrarySeq
         --return $ grid (trace "Seq1: " seq1) (trace "Seq2: " seq2)
         return $ grid seq1 seq2
 
 
 equalsItself :: Seq -> Bool
 equalsItself s =  s == s
+
+noEmptySeqs :: Seq -> Bool
+noEmptySeqs s = s /= BS.empty
 
 equalThemselves :: [Seq] -> Bool
 equalThemselves xs = and $ map equalsItself xs
@@ -65,8 +79,8 @@ triviallyTrue :: Property -- Property is Gen Prop
 triviallyTrue = forAll intslessThan10 lessThan10
 --              forAll (arbitrary `suchThat` (<10)) lessThan10
 
-pointsToBest :: Grid -> Int -> Int -> Bool
-pointsToBest g x y = case lookUp g x y of
+pointsToBest :: GridAndCoords -> Bool
+pointsToBest (GridAndCoords g x y _s1 _s2) = case lookUp g x y of
                         Diag _   -> and [diagScore > upScore,
                                          diagScore > acrossScore]
                         Across _ -> and [acrossScore > upScore,
@@ -116,8 +130,8 @@ trivial2 :: GridAndCoords -> Bool
 trivial2 (GridAndCoords _g _x _y _s1 _s2) = True
 
 genWorks :: GridAndCoords -> Bool
-genWorks (GridAndCoords g x y _s1 _s2) = and [inXRangeOfGrid g x,
-                                            inYRangeOfGrid g y]
+genWorks (GridAndCoords g x y _s1 _s2) = and [inYRangeOfGrid g x,
+                                            inXRangeOfGrid g y]
 
 genWorksDetail :: Seq -> Seq -> Bool
 genWorksDetail s1 s2 = and [inXRangeOfGrid g x,
@@ -133,10 +147,14 @@ genWorksDetail s1 s2 = and [inXRangeOfGrid g x,
 
 main :: IO ()
 main = do
+    print "I do not want to gen empty Seqs"
+    quickCheck noEmptySeqs
+    print "simple stuff"
     quickCheck equalsItself
     quickCheck equalThemselves
     quickCheck startIsStart
     quickCheck triviallyTrue
+    print "points to Best"
     quickCheck pointsToBest
-    quickCheck trivial2
+    print "arbitrary :: Gen GridAndCoords is sane" 
     quickCheck genWorks
