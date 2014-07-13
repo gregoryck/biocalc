@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 
 import Test.QuickCheck
@@ -7,21 +8,21 @@ import AlignPar as AP
 -- import AlnHtml
 --import Align as A
 import Data.Array
--- import Control.Monad
+import Control.Monad
 --import Data.Char
 
-import Data.ByteString.Char8 as BS hiding (map, concat, zip, null)
+-- import Data.ByteString.Char8 as BS hiding (map, concat, zip, null)
 -- import Debug.Trace
 
 arbitraryNonEmpty :: Gen String
 arbitraryNonEmpty = arbitrary `suchThat` (not . null)
 
-
-
---TODO instance arbitrary Seq just AGCT ???
-instance Arbitrary BS.ByteString where
+instance Arbitrary Seq where
     arbitrary :: Gen Seq
-    arbitrary = fmap AP.tobs arbitraryNonEmpty
+    arbitrary = do
+        length_ <- choose (1,100)
+        str <- (liftM (take length_) $ listOf arbitrary) :: Gen String
+        return $ AP.tobs str
 
 instance Arbitrary Grid where
     arbitrary = do
