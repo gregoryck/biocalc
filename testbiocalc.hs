@@ -94,7 +94,7 @@ pointsToBest (GridAndCoords g x y _s1 _s2) = case lookUp g x y of
                         acrossScore = scoreOf $ lookUp g (x - 1) y
 
 inRangeOfGrid :: Grid -> ((Int, Int) -> Int) -> Int -> Bool
-inRangeOfGrid g sel x = and [x >= (sel $ gridBounds g),
+inRangeOfGrid g sel x = and [x >= 0,
                              x <= (sel $ gridBounds g)]
 
 inXRangeOfGrid :: Grid -> Int -> Bool
@@ -130,8 +130,8 @@ trivial2 :: GridAndCoords -> Bool
 trivial2 (GridAndCoords _g _x _y _s1 _s2) = True
 
 genWorks :: GridAndCoords -> Bool
-genWorks (GridAndCoords g x y _s1 _s2) = and [inYRangeOfGrid g x,
-                                            inXRangeOfGrid g y]
+genWorks (GridAndCoords g x y _s1 _s2) = and [inXRangeOfGrid g x,
+                                            inYRangeOfGrid g y]
 
 genWorksDetail :: Seq -> Seq -> Bool
 genWorksDetail s1 s2 = and [inXRangeOfGrid g x,
@@ -154,7 +154,7 @@ main = do
     quickCheck equalThemselves
     quickCheck startIsStart
     quickCheck triviallyTrue
-    print "points to Best"
-    quickCheck pointsToBest
     print "arbitrary :: Gen GridAndCoords is sane" 
     quickCheck genWorks
+    print "points to Best"
+    quickCheck pointsToBest
