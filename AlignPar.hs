@@ -4,7 +4,8 @@ import Data.ByteString.Char8 as BS hiding (map, concat, zip)
 
 --import Control.Monad.Par.Scheds.Trace as P
 import Data.Array
---import Debug.Trace (trace)
+import Debug.Trace (trace)
+import Text.Printf
 
 tobs :: String -> BS.ByteString
 tobs = BS.pack
@@ -82,7 +83,7 @@ path' g' x y accumList = case cell of
                         cell = lookUp g' x y
 
 lookUp :: Grid -> Int -> Int -> Cell
-lookUp (Grid x y a) n1 n2 =  a ! n1 ! n2
+lookUp (Grid _x _y a) n1 n2 =  a ! n1 ! n2
 
 scoreOf :: Cell -> Int
 scoreOf (Diag n) = n
@@ -103,20 +104,31 @@ grid :: Seq -> Seq -> Grid
 grid s1 s2 = Grid x y $ listArray (0, x - 1) $ map arrayForIdx [0..]
     where
         arrayForIdx :: Int -> Array Int Cell
-        arrayForIdx 0   = listArray (0, (y) - 1) $ Start (scoreAt s1 0 s2 0) : [Up (scoreAt s1 0 s2 idx2) -* gapPenalty | idx2 <- [1..]]
-        arrayForIdx idx = listArray (0, (y) - 1) $ map bestScore [0..]
+        arrayForIdx 0   = listArray (0, y - 1) $ 
+                          Start (scoreAt s1 0 s2 0) : [Up (scoreAt s1 0 s2 idx2) -* gapPenalty | idx2 <- [1..]]
+        arrayForIdx idx = listArray (0, y - 1) $ map bestScore' [0..]
             where
-                bestScore :: Int -> Cell
-                bestScore 0 = Across (scoreAt s1 idx s2 0) -* gapPenalty
-                bestScore idx2 | (up idx2) >= (across idx2) && (up idx2) >= (diag idx2)     = up idx2
-                               | (across idx2) >= (up idx2) && (across idx2) >= (diag idx2) = across idx2
-                               | otherwise                                                  = diag idx2
-
-                diag idx2   = diagTo (lookUp (grid s1 s2) (idx-1) (idx2-1)) +* (scoreAt s1 idx s2 idx2)
-                across idx2 = acrossTo (lookUp (grid s1 s2) (idx-1) idx2)   +* (scoreAt s1 idx s2 idx2)
-                up idx2     = upTo (lookUp (grid s1 s2) idx (idx2-1))       +* (scoreAt s1 idx s2 idx2)
+              bestScore' = bestScore s1 s2 idx
         x = BS.length s1
         y = BS.length s2
+
+           
+
+bestScore :: Seq -> Seq -> Int -> Int -> Cell
+bestScore s1 s2 idx 0 = Across (scoreAt s1 idx s2 0) -* gapPenalty
+bestScore s1 s2 idx1 idx2 | (up idx2) >= (across idx2) && 
+                            (up idx2) >= (diag idx2)     = up idx2
+                          | (across idx2) >= (up idx2) && 
+                            (across idx2) >= (diag idx2) = across idx2
+                          | otherwise                    = diag idx2
+-- (trace 
+--                                                             (printf "up idx2 = %s\nacross idx2 = %s\ndiag idx2 = %s\n" (show $ up idx2) (show $ across idx2) (show $ diag idx2)) 
+--                                                             diag idx2)
+            where
+                diag idx2'   = diagTo (lookUp (grid s1 s2) (idx1-1) (idx2'-1)) +* (scoreAt s1 idx1 s2 idx2')
+                across idx2' = acrossTo (lookUp (grid s1 s2) (idx1-1) idx2')   +* (scoreAt s1 idx1 s2 idx2')
+                up idx2'     = upTo (lookUp (grid s1 s2) idx1 (idx2'-1))       +* (scoreAt s1 idx1 s2 idx2')
+
 
 scoreAt :: Seq -> Int -> Seq -> Int -> Int
 scoreAt s1 i1 s2 i2 = similarityScore (BS.index s1 i1) (BS.index s2 i2)

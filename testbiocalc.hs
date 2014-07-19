@@ -42,6 +42,14 @@ instance Arbitrary Grid where
         --return $ grid (trace "Seq1: " seq1) (trace "Seq2: " seq2)
         return $ grid seq1 seq2
 
+instance Arbitrary Cell where
+    arbitrary = do
+        n <- elements [1,2,3] :: Gen Integer
+        let cell = case n of 1 -> Diag 
+                             2 -> Across
+                             3 -> Up
+                             _ -> error "1-3 only plz"
+        liftM cell arbitrary
 
 equalsItself :: Seq -> Bool
 equalsItself s =  s == s
@@ -141,7 +149,8 @@ genWorksDetail s1 s2 = and [inXRangeOfGrid g x,
                    x = 0 -- hmm
                    y = 0
 
-
+derivingEq :: Cell -> Cell -> Bool
+derivingEq c1 c2 = (c1 > c2) == (scoreOf c1 > scoreOf c2)
                                  
 
 
@@ -158,3 +167,5 @@ main = do
     quickCheck genWorks
     print "points to Best"
     quickCheck pointsToBest
+    print "instance Eq Cell is correct"
+    quickCheck derivingEq
