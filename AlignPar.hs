@@ -45,7 +45,10 @@ letterWithGaps Side (Up _, c) = [' ', c]
 letterWithGaps _ (Diag _, c) = [c]
 letterWithGaps _ (Start _, c) = [c]
 
-data Cell = Up Int | Across Int | Diag Int | Start Int deriving (Show, Eq, Ord)
+data Cell = Up Int | Across Int | Diag Int | Start Int deriving (Show, Eq)
+
+instance Ord Cell where
+    compare c1 c2 = compare (scoreOf c1) (scoreOf c2)
 
 data Grid = Grid Int Int (Array Int (Array Int Cell)) deriving Show
 

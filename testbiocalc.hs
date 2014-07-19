@@ -149,8 +149,8 @@ genWorksDetail s1 s2 = and [inXRangeOfGrid g x,
                    x = 0 -- hmm
                    y = 0
 
-derivingEq :: Cell -> Cell -> Bool
-derivingEq c1 c2 = (c1 > c2) == (scoreOf c1 > scoreOf c2)
+derivingOrd :: Cell -> Cell -> Bool
+derivingOrd c1 c2 = (c1 > c2) == (scoreOf c1 > scoreOf c2)
                                  
 
 
@@ -167,5 +167,5 @@ main = do
     quickCheck genWorks
     print "points to Best"
     quickCheck pointsToBest
-    print "instance Eq Cell is correct"
-    quickCheck derivingEq
+    print "instance Ord Cell is correct"
+    quickCheck derivingOrd
