@@ -108,6 +108,7 @@ grid s1 s2 = newGrid
                  maxX = (BS.length s1) - 1
                  maxY = (BS.length s2) - 1
                  cellAtIdx (x,y) = bestScore newGrid s1 s2 x y
+                 -- cellAtIdx (x,y) = Start 1
                         
 
 bestScore :: Grid -> Seq -> Seq -> Int -> Int -> Cell
@@ -121,8 +122,8 @@ bestScore g s1 s2 idx1 idx2 | (up idx2) >= (across idx2) &&
                             | otherwise                    = diag idx2
             where
                 diag idx2'   = diagTo (lookUp g (idx1-1) (idx2'-1)) +* (scoreAt s1 idx1 s2 idx2')
-                across idx2' = acrossTo (lookUp g (idx1-1) idx2')   +* (scoreAt s1 idx1 s2 idx2')
-                up idx2'     = upTo (lookUp g idx1 (idx2'-1))       +* (scoreAt s1 idx1 s2 idx2')
+                across idx2' = acrossTo (lookUp g (idx1-1) idx2')   +* (scoreAt s1 idx1 s2 idx2') -* gapPenalty
+                up idx2'     = upTo (lookUp g idx1 (idx2'-1))       +* (scoreAt s1 idx1 s2 idx2') -* gapPenalty
 
 
 scoreAt :: Seq -> Int -> Seq -> Int -> Int

@@ -25,7 +25,7 @@ instance Arbitrary Seq where
     arbitrary = do
         length_ <- choose (1,100)
         str <- (liftM (take length_) $ infiniteListOf arbitraryNuc) :: Gen String
-        return $ AP. tobs str
+        return $ AP.tobs str
         -- return $ AP.tobs (trace ("length_ is " ++ (show length_) ++ "str " ++ str) str) 
                
 arbitrarySeq :: Gen Seq

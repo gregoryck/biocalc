@@ -44,8 +44,9 @@ splitBy n xs = [front] ++ (splitBy n back)
 rows :: AP.Grid -> [[AP.Cell]]
 rows (AP.Grid arr) = splitEvery rowLength $ elems arr 
              where
-               rowLength = snd $ snd $ bounds arr
+               rowLength = (+1) $ snd $ snd $ bounds arr
                
 splitEvery :: Int -> [a] -> [[a]]
+splitEvery _ [] = []
 splitEvery howMany lst = [take howMany lst] ++ 
                          (splitEvery howMany $ drop howMany lst) 
