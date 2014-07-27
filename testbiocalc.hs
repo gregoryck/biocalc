@@ -7,7 +7,7 @@ import Test.QuickCheck
 import AlignPar as AP
 -- import AlnHtml
 --import Align as A
-import Data.Array
+-- import Data.Array
 import Control.Monad
 --import Data.Char
 
@@ -25,12 +25,12 @@ instance Arbitrary Seq where
     arbitrary = do
         length_ <- choose (1,100)
         str <- (liftM (take length_) $ infiniteListOf arbitraryNuc) :: Gen String
-        return $ AP.tobs str
+        return $ AP. tobs str
         -- return $ AP.tobs (trace ("length_ is " ++ (show length_) ++ "str " ++ str) str) 
                
 arbitrarySeq :: Gen Seq
 arbitrarySeq = do
-        length_ <- choose (1,100)
+        length_ <- choose (1,10)
         str <- (liftM (take length_) $ listOf arbitraryNuc) :: Gen String
         return $ AP.tobs str
         -- return $ AP.tobs (trace ("length_ is" ++ (show length_)) str) 
@@ -64,8 +64,9 @@ emptyOrFirstIsStart :: Grid -> Bool
 emptyOrFirstIsStart g = or [isEmpty g, isStart $ lookUp g 0 0]
 
 isEmpty :: Grid -> Bool
-isEmpty (Grid _ _ array0) = or [(bounds array0) == (0,-1),
-                            (bounds (array0 ! 0)) == (0,-1)]
+isEmpty = undefined
+-- isEmpty (Grid array0) = or [(bounds array0) == (0,-1),
+--                             (bounds (array0 ! 0)) == (0,-1)]
 
 isStart :: Cell -> Bool
 isStart (Start _) = True

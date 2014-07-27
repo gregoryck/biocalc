@@ -23,6 +23,8 @@ needleParRoute :: ScottyM ()
 needleParRoute = get "/needlepar/:string1/:string2/" needleActionPar
 gridRoute :: ScottyM ()
 gridRoute = get "/grid/:string1/:string2/" gridAction
+gridParRoute :: ScottyM ()
+gridParRoute = get "/gridpar/:string1/:string2/" gridParAction
 
 concatAction :: ActionM ()
 concatAction = do
@@ -44,6 +46,13 @@ needleActionPar = do
 
 gridAction :: ActionM ()
 gridAction = do
+    string1 <- param "string1"
+    string2 <- param "string2"
+    html $ AH.prettyGrid $ AP.grid string1  string2
+    setHeader "Content-Type" "text/html; charset=UTF-8"
+
+gridParAction :: ActionM ()
+gridParAction = do
     string1 <- param "string1"
     string2 <- param "string2"
     html $ AH.prettyGrid $ AP.grid string1  string2

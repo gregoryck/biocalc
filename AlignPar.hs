@@ -1,6 +1,6 @@
 
 module AlignPar where
-import Data.ByteString.Char8 as BS hiding (map, concat, zip)
+import Data.ByteString.Char8 as BS hiding (map, concat, zip, maximum)
 
 --import Control.Monad.Par.Scheds.Trace as P
 import Data.Array
@@ -10,17 +10,11 @@ import Text.Printf
 tobs :: String -> BS.ByteString
 tobs = BS.pack
 
+toseq :: String -> Seq       
+toseq = tobs
+
 space :: BS.ByteString
 space = tobs " "
-
---traverseWithKey :: Applicative t => (Key -> a -> t b) -> IntMap a -> t (IntMap b)
---fork :: Par () -> Par ()
---spawn :: NFData a => Par a -> Par (IVar a)
---new :: Par (IVar a)
---get :: IVar a -> Par a
---put :: NFData a => IVar a -> a -> Par ()
---runPar :: Par a -> a
---return :: a -> Par a    -- (for example)
 
 type Seq = ByteString
 data Aln = Aln ByteString ByteString deriving Show
@@ -50,24 +44,24 @@ data Cell = Up Int | Across Int | Diag Int | Start Int deriving (Show, Eq)
 instance Ord Cell where
     compare c1 c2 = compare (scoreOf c1) (scoreOf c2)
 
-data Grid = Grid Int Int (Array Int (Array Int Cell)) deriving Show
+data Grid = Grid (Array (Int, Int) Cell) deriving Show
 
-aArray :: Array Int Cell
-aArray = listArray (0,4) [Start 1, Up 1, Up 1, Up 1, Up 1]
---badGrid :: Grid
---badGrid = Grid $ (listArray (0,2) $ repeat aArray)
+arrOfGrid (Grid arr) = arr
 
+theArray :: Array (Int, Int) Cell
+theArray = listArray ((0,0), (3,3)) [Start 0, Up 1, Up 2, Up 3, Across 1, Across 2, Up 3, Up 4, Across 2, Diag 2, Diag 3, Diag 4, Across 3, Diag 2, Diag 3, Diag 4]
 goodGrid :: Grid
-goodGrid = Grid 4 4 $ listArray (0,3) $ [listArray (0,3) [Start 0, Up 1, Up 2, Up 3],
-                                         listArray (0,3) [Across 1, Across 2, Up 3, Up 4],
-                                         listArray (0,3) [Across 2, Diag 2, Diag 3, Diag 4],
-                                         listArray (0,3) [Across 3, Diag 2, Diag 3, Diag 4]
-                                        ]
+goodGrid = Grid theArray
+
 
 gridBounds :: Grid -> (Int, Int)
-gridBounds (Grid x y array0) = (x,y)
+--gridBounds (Grid array0) = maximum $ indices array0
+gridBounds (Grid arr) = snd $ bounds arr
 
+xMax :: Grid -> Int
 xMax = fst . gridBounds
+
+yMax :: Grid -> Int
 yMax = snd . gridBounds
 
 path :: Grid -> [Cell]
@@ -86,7 +80,7 @@ path' g' x y accumList = case cell of
                         cell = lookUp g' x y
 
 lookUp :: Grid -> Int -> Int -> Cell
-lookUp (Grid _x _y a) n1 n2 =  a ! n1 ! n2
+lookUp (Grid arr) x y = arr ! (x,y)
 
 scoreOf :: Cell -> Int
 scoreOf (Diag n) = n
@@ -103,34 +97,32 @@ acrossTo cell = Across (scoreOf cell)
 upTo :: Cell -> Cell
 upTo cell = Up (scoreOf cell)
 
+coordRange :: Int -> Int -> [(Int, Int)]
+coordRange x y = [(x', y') | x' <- [0..x], y' <- [0..y]]
+
 grid :: Seq -> Seq -> Grid
-grid s1 s2 = Grid x y $ listArray (0, x - 1) $ map arrayForIdx [0..]
-    where
-        arrayForIdx :: Int -> Array Int Cell
-        arrayForIdx 0   = listArray (0, y - 1) $ 
-                          Start (scoreAt s1 0 s2 0) : [Up (scoreAt s1 0 s2 idx2) -* gapPenalty | idx2 <- [1..]]
-        arrayForIdx idx = listArray (0, y - 1) $ map bestScore' [0..]
-            where
-              bestScore' = bestScore s1 s2 idx
-        x = BS.length s1
-        y = BS.length s2
+grid s1 s2 = newGrid 
+               where
+                 newGrid = Grid newArray
+                 newArray = listArray ((0,0), (maxX, maxY)) $ map cellAtIdx (coordRange maxX maxY)
+                 maxX = (BS.length s1) - 1
+                 maxY = (BS.length s2) - 1
+                 cellAtIdx (x,y) = bestScore newGrid s1 s2 x y
+                        
 
-           
-
-bestScore :: Seq -> Seq -> Int -> Int -> Cell
-bestScore s1 s2 idx 0 = Across (scoreAt s1 idx s2 0) -* gapPenalty
-bestScore s1 s2 idx1 idx2 | (up idx2) >= (across idx2) && 
-                            (up idx2) >= (diag idx2)     = up idx2
-                          | (across idx2) >= (up idx2) && 
-                            (across idx2) >= (diag idx2) = across idx2
-                          | otherwise                    = diag idx2
--- (trace 
---                                                             (printf "up idx2 = %s\nacross idx2 = %s\ndiag idx2 = %s\n" (show $ up idx2) (show $ across idx2) (show $ diag idx2)) 
---                                                             diag idx2)
+bestScore :: Grid -> Seq -> Seq -> Int -> Int -> Cell
+bestScore _g s1 s2 0 0 = Start (scoreAt s1 0 s2 0)
+bestScore _g s1 s2 0 idx = Up (scoreAt s1 0 s2 idx) -* gapPenalty
+bestScore _g s1 s2 idx 0 = Across (scoreAt s1 idx s2 0) -* gapPenalty
+bestScore g s1 s2 idx1 idx2 | (up idx2) >= (across idx2) && 
+                              (up idx2) >= (diag idx2)     = up idx2
+                            | (across idx2) >= (up idx2) && 
+                              (across idx2) >= (diag idx2) = across idx2
+                            | otherwise                    = diag idx2
             where
-                diag idx2'   = diagTo (lookUp (grid s1 s2) (idx1-1) (idx2'-1)) +* (scoreAt s1 idx1 s2 idx2')
-                across idx2' = acrossTo (lookUp (grid s1 s2) (idx1-1) idx2')   +* (scoreAt s1 idx1 s2 idx2')
-                up idx2'     = upTo (lookUp (grid s1 s2) idx1 (idx2'-1))       +* (scoreAt s1 idx1 s2 idx2')
+                diag idx2'   = diagTo (lookUp g (idx1-1) (idx2'-1)) +* (scoreAt s1 idx1 s2 idx2')
+                across idx2' = acrossTo (lookUp g (idx1-1) idx2')   +* (scoreAt s1 idx1 s2 idx2')
+                up idx2'     = upTo (lookUp g idx1 (idx2'-1))       +* (scoreAt s1 idx1 s2 idx2')
 
 
 scoreAt :: Seq -> Int -> Seq -> Int -> Int
