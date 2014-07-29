@@ -21,16 +21,19 @@ arbitraryNuc :: Gen Char
 arbitraryNuc = 
   oneof $ map return ['A', 'G', 'C', 'T']
 
+maxSeqLen :: Int
+maxSeqLen = 100
+
 instance Arbitrary Seq where
     arbitrary = do
-        length_ <- choose (1,100)
+        length_ <- choose (1,maxSeqLen)
         str <- (liftM (take length_) $ infiniteListOf arbitraryNuc) :: Gen String
         return $ AP.tobs str
-        -- return $ AP.tobs (trace ("length_ is " ++ (show length_) ++ "str " ++ str) str) 
+--        return $ AP.tobs (trace ("length_ is " ++ (show length_) ++ "str " ++ str) str) 
                
 arbitrarySeq :: Gen Seq
 arbitrarySeq = do
-        length_ <- choose (1,10)
+        length_ <- choose (1,maxSeqLen)
         str <- (liftM (take length_) $ listOf arbitraryNuc) :: Gen String
         return $ AP.tobs str
         -- return $ AP.tobs (trace ("length_ is" ++ (show length_)) str) 
@@ -60,20 +63,12 @@ noEmptySeqs s = s /= BS.empty
 equalThemselves :: [Seq] -> Bool
 equalThemselves xs = and $ map equalsItself xs
 
-emptyOrFirstIsStart :: Grid -> Bool
-emptyOrFirstIsStart g = or [isEmpty g, isStart $ lookUp g 0 0]
-
-isEmpty :: Grid -> Bool
-isEmpty = undefined
--- isEmpty (Grid array0) = or [(bounds array0) == (0,-1),
---                             (bounds (array0 ! 0)) == (0,-1)]
-
 isStart :: Cell -> Bool
 isStart (Start _) = True
 isStart _ = False
 
 startIsStart :: Seq -> Seq -> Bool
-startIsStart s1 s2 = emptyOrFirstIsStart $ grid s1 s2
+startIsStart s1 s2 = isStart $ lookUp (grid s1 s2) 0 0
 
 intslessThan10 :: Gen Int
 intslessThan10 = suchThat arbitrary (<10)
@@ -168,5 +163,5 @@ main = do
     quickCheck genWorks
     print "points to Best"
     quickCheck pointsToBest
-    print "instance Ord Cell is correct"
-    quickCheck derivingOrd
+    -- print "instance Ord Cell is correct"
+    -- quickCheck derivingOrd

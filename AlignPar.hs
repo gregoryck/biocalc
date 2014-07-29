@@ -115,15 +115,19 @@ bestScore :: Grid -> Seq -> Seq -> Int -> Int -> Cell
 bestScore _g s1 s2 0 0 = Start (scoreAt s1 0 s2 0)
 bestScore _g s1 s2 0 idx = Up (scoreAt s1 0 s2 idx) -* gapPenalty
 bestScore _g s1 s2 idx 0 = Across (scoreAt s1 idx s2 0) -* gapPenalty
-bestScore g s1 s2 idx1 idx2 | (up idx2) >= (across idx2) && 
-                              (up idx2) >= (diag idx2)     = up idx2
-                            | (across idx2) >= (up idx2) && 
-                              (across idx2) >= (diag idx2) = across idx2
-                            | otherwise                    = diag idx2
+bestScore g s1 s2 idx1 idx2 | up >= across && 
+                              up >= diag       = up 
+                            | across >= up  && 
+                              across >= diag   = across
+                            | otherwise        = diag
             where
-                diag idx2'   = diagTo (lookUp g (idx1-1) (idx2'-1)) +* (scoreAt s1 idx1 s2 idx2')
-                across idx2' = acrossTo (lookUp g (idx1-1) idx2')   +* (scoreAt s1 idx1 s2 idx2') -* gapPenalty
-                up idx2'     = upTo (lookUp g idx1 (idx2'-1))       +* (scoreAt s1 idx1 s2 idx2') -* gapPenalty
+                diag' = trace (printf "diag %d,%d = %d" idx1 idx2 $ scoreOf diag') diag'
+                across' = trace (printf "across %d,%d = %d" idx1 idx2 $ scoreOf across') across'
+                up' = trace (printf "up %d,%d = %d" idx1 idx2 $ scoreOf up') up'
+                diag  = diagTo (lookUp g (idx1-1) (idx2-1)) +* thisScore
+                across = acrossTo (lookUp g (idx1-1) idx2) +* thisScore -* gapPenalty
+                up  = upTo (lookUp g idx1 (idx2-1)) +* thisScore -* gapPenalty
+                thisScore = scoreAt s1 idx1 s2 idx2
 
 
 scoreAt :: Seq -> Int -> Seq -> Int -> Int
