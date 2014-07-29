@@ -85,17 +85,17 @@ triviallyTrue = forAll intslessThan10 lessThan10
 
 pointsToBest :: GridAndCoords -> Bool
 pointsToBest (GridAndCoords g x y _s1 _s2) = case lookUp g x y of
-                        Diag _   -> and [diagScore > upScore,
-                                         diagScore > acrossScore]
-                        Across _ -> and [acrossScore > upScore,
-                                         acrossScore > diagScore]
-                        Up _     -> and [upScore > diagScore,
-                                         upScore > acrossScore]
+                        Diag _   -> and [diagScore >= upScore,
+                                         diagScore >= acrossScore]
+                        Across _ -> and [acrossScore >= upScore,
+                                         acrossScore >= diagScore]
+                        Up _     -> and [upScore >= diagScore,
+                                         upScore >= acrossScore]
                         Start _  -> and [x == 0, y == 0]
                      where
                         diagScore = scoreOf $ lookUp g (x - 1) (y - 1)
-                        upScore = scoreOf $ lookUp g x (y - 1)
-                        acrossScore = scoreOf $ lookUp g (x - 1) y
+                        upScore = scoreOf (lookUp g x (y - 1)) - gapPenalty
+                        acrossScore = scoreOf (lookUp g (x - 1) y) - gapPenalty
 
 inRangeOfGrid :: Grid -> ((Int, Int) -> Int) -> Int -> Bool
 inRangeOfGrid g sel x = and [x >= 0,
