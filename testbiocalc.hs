@@ -120,8 +120,8 @@ instance Arbitrary GridAndCoords where
                 s1 <- arbitrary
                 s2 <- arbitrary
                 g <- return $ grid s1 s2
-                x <- choose (0, xMax g - 1)
-                y <- choose (0, yMax g - 1)
+                x <- choose (0, xMax g)
+                y <- choose (0, yMax g)
                 return $ GridAndCoords g x y s1 s2
     
     -- arbitrary = arbitrary >>= \s1 ->
@@ -163,5 +163,5 @@ main = do
     quickCheck genWorks
     print "points to Best"
     quickCheck pointsToBest
-    -- print "instance Ord Cell is correct"
-    -- quickCheck derivingOrd
+    print "instance Ord Cell is correct"
+    quickCheck derivingOrd
