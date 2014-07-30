@@ -84,6 +84,18 @@ triviallyTrue = forAll intslessThan10 lessThan10
 --              forAll (arbitrary `suchThat` (<10)) lessThan10
 
 pointsToBest :: GridAndCoords -> Bool
+pointsToBest (GridAndCoords g 0 0 _s1 _s2) = case lookUp g 0 0 of
+                        Start _ -> True
+                        _ -> False
+                                           
+pointsToBest (GridAndCoords g 0 y _s1 _s2) = case lookUp g 0 y of
+                        Up _ -> True
+                        _ -> False
+
+pointsToBest (GridAndCoords g x 0 _s1 _s2) = case lookUp g x 0 of
+                        Across _ -> True
+                        _ -> False
+
 pointsToBest (GridAndCoords g x y _s1 _s2) = case lookUp g x y of
                         Diag _   -> and [diagScore >= upScore,
                                          diagScore >= acrossScore]
@@ -91,7 +103,7 @@ pointsToBest (GridAndCoords g x y _s1 _s2) = case lookUp g x y of
                                          acrossScore >= diagScore]
                         Up _     -> and [upScore >= diagScore,
                                          upScore >= acrossScore]
-                        Start _  -> and [x == 0, y == 0]
+                        Start _  -> False
                      where
                         diagScore = scoreOf $ lookUp g (x - 1) (y - 1)
                         upScore = scoreOf (lookUp g x (y - 1)) - gapPenalty
