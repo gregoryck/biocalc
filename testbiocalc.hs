@@ -96,7 +96,7 @@ pointsToBest (GridAndCoords g x 0 _s1 _s2) = case lookUp g x 0 of
                         Across _ -> True
                         _ -> False
 
-pointsToBest (GridAndCoords g x y _s1 _s2) = case lookUp g x y of
+pointsToBest (GridAndCoords g x y s1 s2) = case lookUp g x y of
                         Diag _   -> and [diagScore >= upScore,
                                          diagScore >= acrossScore]
                         Across _ -> and [acrossScore >= upScore,
@@ -105,9 +105,16 @@ pointsToBest (GridAndCoords g x y _s1 _s2) = case lookUp g x y of
                                          upScore >= acrossScore]
                         Start _  -> False
                      where
-                        diagScore = scoreOf $ lookUp g (x - 1) (y - 1)
+                        diagScore = (scoreOf $ lookUp g (x - 1) (y - 1)) + scoreAt s1 x s2 y
                         upScore = scoreOf (lookUp g x (y - 1)) - gapPenalty
                         acrossScore = scoreOf (lookUp g (x - 1) y) - gapPenalty
+
+scoreThisCellIsRight :: GridAndCoords -> Bool
+scoreThisCellIsRight (GridAndCoords g x y s1 s2) = case lookUp g x y of
+                        Diag score    -> (scoreOf $ lookUp g (x - 1) (y - 1)) + scoreAt s1 x s2 y == score
+                        Up score    -> (scoreOf $ lookUp g x (y - 1)) - gapPenalty == score
+                        Across score    -> (scoreOf $ lookUp g (x - 1) y) - gapPenalty == score
+                        Start score -> (scoreAt s1 x s2 y) == score
 
 inRangeOfGrid :: Grid -> ((Int, Int) -> Int) -> Int -> Bool
 inRangeOfGrid g sel x = and [x >= 0,
@@ -177,3 +184,5 @@ main = do
     quickCheck pointsToBest
     print "instance Ord Cell is correct"
     quickCheck derivingOrd
+    print "score is right in this cell"
+    quickCheck scoreThisCellIsRight

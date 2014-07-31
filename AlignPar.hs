@@ -113,20 +113,20 @@ grid s1 s2 = newGrid
 
 bestScore :: Grid -> Seq -> Seq -> Int -> Int -> Cell
 bestScore _g s1 s2 0 0 = Start (scoreAt s1 0 s2 0)
-bestScore _g s1 s2 0 idx = Up (scoreAt s1 0 s2 idx) -* gapPenalty
-bestScore _g s1 s2 idx 0 = Across (scoreAt s1 idx s2 0) -* gapPenalty
+bestScore g _s1 _s2 0 idx = Up (scoreOf $ lookUp g 0 (idx - 1)) -* gapPenalty
+bestScore g _s1 _s2 idx 0 = Across (scoreOf $ lookUp g (idx - 1) 0) -* gapPenalty
 bestScore g s1 s2 idx1 idx2 | up >= across && 
                               up >= diag       = up 
                             | across >= up  && 
                               across >= diag   = across
                             | otherwise        = diag
             where
-                diag' = trace (printf "diag %d,%d = %d" idx1 idx2 $ scoreOf diag') diag'
-                across' = trace (printf "across %d,%d = %d" idx1 idx2 $ scoreOf across') across'
-                up' = trace (printf "up %d,%d = %d" idx1 idx2 $ scoreOf up') up'
+                -- diag' = trace (printf "diag %d,%d = %d" idx1 idx2 $ scoreOf diag') diag'
+                -- across' = trace (printf "across %d,%d = %d" idx1 idx2 $ scoreOf across') across'
+                -- up' = trace (printf "up %d,%d = %d" idx1 idx2 $ scoreOf up') up'
                 diag  = diagTo (lookUp g (idx1-1) (idx2-1)) +* thisScore
-                across = acrossTo (lookUp g (idx1-1) idx2) +* thisScore -* gapPenalty
-                up  = upTo (lookUp g idx1 (idx2-1)) +* thisScore -* gapPenalty
+                across = acrossTo (lookUp g (idx1-1) idx2) -* gapPenalty
+                up  = upTo (lookUp g idx1 (idx2-1)) -* gapPenalty
                 thisScore = scoreAt s1 idx1 s2 idx2
 
 
@@ -134,8 +134,8 @@ scoreAt :: Seq -> Int -> Seq -> Int -> Int
 scoreAt s1 i1 s2 i2 = similarityScore (BS.index s1 i1) (BS.index s2 i2)
 
 similarityScore :: Char -> Char -> Int
-similarityScore c1 c2 | c1 == c2  = 2
-                      | otherwise = -1
+similarityScore c1 c2 | c1 == c2  = 3
+                      | otherwise = -2 
 
 (-*) :: Cell -> Int -> Cell
 (-*) (Across n) n' = Across (n - n')
@@ -150,4 +150,4 @@ similarityScore c1 c2 | c1 == c2  = 2
 (+*) (Start n) n' = Start (n + n')
 
 gapPenalty :: Int
-gapPenalty = 3
+gapPenalty = 4
