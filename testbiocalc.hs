@@ -22,7 +22,7 @@ arbitraryNuc =
   oneof $ map return ['A', 'G', 'C', 'T']
 
 maxSeqLen :: Int
-maxSeqLen = 100
+maxSeqLen = 500
 
 instance Arbitrary Seq where
     arbitrary = do

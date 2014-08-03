@@ -50,6 +50,7 @@ Benchmark bench-biocalc
                      , text
                      , monad-par
                      , containers
+                     , criterion
 
 Test-Suite test-biocalc
     -- warning: this does not work (always passes)
