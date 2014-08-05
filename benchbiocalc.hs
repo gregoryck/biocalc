@@ -1,10 +1,8 @@
-{-# LANGUAGE BangPatterns #-}
 
-import BioCalc
-import Data.Time.Clock
 import qualified Data.ByteString.Char8 as BS
+import Criterion.Main
 
-import Align
+import AlignPar
 
 psba_pro :: BS.ByteString
 psba_pro = BS.pack "VPSSNAIGLHFYPIWEAATLDEWLYNGGPYQLVIFHFLIGISAYMGRQWELSYRLGMRPWICVAYSAPVSAAFAVFLVYPFGQGSFSDGMPLGISGTFNFMFVFQAEHNILMHPFHMAGVAGMFGGALFSAMHGSLVTSSLIRETTGLDSQNYGYKFGQEEETYNIVAAHGYFGRLIFQYASFNNSRSLHFFLASWPVICVWLTSMGICTMAFNLNGFNFNQSVVDTSGKVVPTWGDVLNRANL"
@@ -12,8 +10,14 @@ psba_pro = BS.pack "VPSSNAIGLHFYPIWEAATLDEWLYNGGPYQLVIFHFLIGISAYMGRQWELSYRLGMRPW
 psba_arab :: BS.ByteString
 psba_arab = BS.pack "MTAILERRESESLWGRFCNWITSTENRLYIGWFGVLMIPTLLTATSVFIIAFIAAPPVDIDGIREPVSGSLLYGNNIISGAIIPTSAAIGLHFYPIWEAASVDEWLYNGGPYELIVLHFLLGVACYMGREWELSFRLGMRPWIAVAYSAPVAAATAVFLIYPIGQGSFSDGMPLGISGTFNFMIVFQAEHNILMHPFHMLGVAGVFGGSLFSAMHGSLVTSSLIRETTENESANEGYRFGQEEETYNIVAAHGYFGRLIFQYASFNNSRSLHFFLAAWPVVGIWFTALGISTMAFNLNGFNFNQSVVDSQGRVINTWADIINRANLGMEVMHERNAHNFPLDLAAVEAPSTNG"
 
-main = do
-    start <- getCurrentTime
-    let !r = Align.align psba_arab psba_pro
-    end <- getCurrentTime
-    putStrLn $ "align took " ++ show (diffUTCTime end start)
+main :: IO ()
+main = defaultMain [
+        bgroup "fib" [ bench "align Pro and Arabidopsis psbA" $ whnf print $ align psba_arab psba_pro
+                     ]
+                    ]
+
+-- main = do
+--   benchmark 
+--     let !r = Align.align psba_arab psba_pro
+--     end <- getCurrentTime
+--     putStrLn $ "align took " ++ show (diffUTCTime end start)
