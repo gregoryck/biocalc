@@ -7,7 +7,7 @@ import Web.Scotty
 import Data.Monoid (mconcat)
 
 import qualified Data.Text.Lazy as T
---import Control.Monad
+import Control.Monad
 
 import AlignPar as AP
 import Align as A
@@ -25,6 +25,9 @@ gridRoute :: ScottyM ()
 gridRoute = get "/grid/:string1/:string2/" gridAction
 gridParRoute :: ScottyM ()
 gridParRoute = get "/gridpar/:string1/:string2/" gridParAction
+sliceRoute :: ScottyM ()
+sliceRoute = get "/slice/:string1/:begin/:end/" sliceAction               
+
 
 concatAction :: ActionM ()
 concatAction = do
@@ -57,6 +60,18 @@ gridParAction = do
     string2 <- param "string2"
     html $ AH.prettyGrid $ AP.grid string1  string2
     setHeader "Content-Type" "text/html; charset=UTF-8"
+
+              
+-- 1-based index, inclusive end
+sliceAction :: ActionM ()
+sliceAction = do
+    string <- param "string1"
+    begin <- liftM read $ param "begin"
+    end <- liftM read $ param "end"
+    let result = T.take (end - begin + 1) $ T.drop (begin - 1) string
+    text $ result
+ 
+    
 
 --needleActionBS :: ActionM ()
 --needleActionBS :: ActionM ()

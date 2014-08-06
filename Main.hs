@@ -11,3 +11,4 @@ main = scotty 3000 $ do
     needleRoute
     needleParRoute
     gridRoute
+    sliceRoute
