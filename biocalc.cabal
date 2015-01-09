@@ -20,9 +20,9 @@ executable biocalc
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.6
-                     , scotty == 0.5.0
-                     , warp == 1.3.10.1
-                     , wai-extra == 1.3.4.6
+                     , scotty 
+                     , warp 
+                     , wai-extra
                      , array
                      , bytestring
                      , text
@@ -42,9 +42,9 @@ Benchmark bench-biocalc
     build-depends: base, time
     default-language:    Haskell2010
     build-depends:       base >=4.6 && <4.7
-                     , scotty == 0.5.0
-                     , warp == 1.3.10.1
-                     , wai-extra == 1.3.4.5
+                     , scotty
+                     , warp
+                     , wai-extra
                      , array
                      , bytestring
                      , text
@@ -62,9 +62,9 @@ Test-Suite test-biocalc
     ghc-options: -Wall
     default-language:    Haskell2010
     build-depends:       base >=4.6 && <4.7
-                     , scotty == 0.5.0
-                     , warp == 1.3.10.1
-                     , wai-extra == 1.3.4.5
+                     , scotty
+                     , warp
+                     , wai-extra
                      , array
                      , bytestring
                      , text
