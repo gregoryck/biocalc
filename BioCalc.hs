@@ -12,8 +12,9 @@ import Control.Monad
 import AlignPar as AP
 import Align as A
 import AlnHtml as AH
+import Translate as Tr
 
---xxx = 1 + "2"
+-- xxxx = 1 + "2"
 
 concatenateRoute :: ScottyM ()
 concatenateRoute = get "/concatenate/:string1/:string2/" concatAction
@@ -27,7 +28,11 @@ gridParRoute :: ScottyM ()
 gridParRoute = get "/gridpar/:string1/:string2/" gridParAction
 sliceRoute :: ScottyM ()
 sliceRoute = get "/slice/:string1/:begin/:end/" sliceAction               
+             
+orfsRoute :: ScottyM ()
+orfsRoute = get "/orfs/:string1/" orfsAction
 
+          
 
 concatAction :: ActionM ()
 concatAction = do
@@ -60,6 +65,11 @@ gridParAction = do
     string2 <- param "string2"
     html $ AH.prettyGrid $ AP.grid string1  string2
     setHeader "Content-Type" "text/html; charset=UTF-8"
+              
+orfsAction :: ActionM ()
+orfsAction = do
+    string1 <- param "string1"
+    text $ T.pack $ show $ Tr.orfs string1
 
               
 -- 1-based index, inclusive end

@@ -4,8 +4,8 @@ import Data.ByteString.Char8 as BS hiding (map, concat, zip, maximum)
 
 --import Control.Monad.Par.Scheds.Trace as P
 import Data.Array
-import Debug.Trace (trace)
-import Text.Printf
+-- import Debug.Trace (trace)
+-- import Text.Printf
 
 tobs :: String -> BS.ByteString
 tobs = BS.pack
@@ -14,7 +14,7 @@ toseq :: String -> Seq
 toseq = tobs
 
 space :: BS.ByteString
-space = tobs " "
+space = tobs " " 1 2
 
 type Seq = ByteString
 data Aln = Aln ByteString ByteString deriving Show
@@ -46,6 +46,7 @@ instance Ord Cell where
 
 data Grid = Grid (Array (Int, Int) Cell) deriving Show
 
+arrOfGrid :: Grid -> Array (Int, Int) Cell
 arrOfGrid (Grid arr) = arr
 
 theArray :: Array (Int, Int) Cell

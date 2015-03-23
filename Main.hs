@@ -6,9 +6,10 @@ import Web.Scotty
 import BioCalc
 
 main :: IO ()
-main = scotty 3000 $ do
+main = scotty 4040 $ do
     concatenateRoute
     needleRoute
     needleParRoute
     gridRoute
     sliceRoute
+    orfsRoute
