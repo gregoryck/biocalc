@@ -14,7 +14,7 @@ toseq :: String -> Seq
 toseq = tobs
 
 space :: BS.ByteString
-space = tobs " " 1 2
+space = tobs " "
 
 type Seq = ByteString
 data Aln = Aln ByteString ByteString deriving Show

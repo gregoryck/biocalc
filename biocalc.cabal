@@ -41,7 +41,7 @@ Benchmark bench-biocalc
     main-is:    benchbiocalc.hs
     build-depends: base, time
     default-language:    Haskell2010
-    build-depends:       base >=4.6 && <4.7
+    build-depends:       base >=4.6
                      , scotty
                      , warp
                      , wai-extra
@@ -61,7 +61,7 @@ Test-Suite test-biocalc
     main-is:    testbiocalc.hs
     ghc-options: -Wall
     default-language:    Haskell2010
-    build-depends:       base >=4.6 && <4.7
+    build-depends:       base >=4.6
                      , scotty
                      , warp
                      , wai-extra
